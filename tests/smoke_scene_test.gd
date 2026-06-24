@@ -74,6 +74,12 @@ func _run() -> void:
 		var energy_before_dash: int = player_for_repair.mech_energy
 		_assert(player_for_repair.try_dash(Vector2.RIGHT), "机甲可以消耗能量冲刺")
 		_assert(player_for_repair.mech_energy == energy_before_dash - player_for_repair.dash_cost, "冲刺会扣除机甲能量")
+		player_for_repair._dash_cooldown_timer = 0.0
+		player_for_repair._last_move_vector = Vector2.LEFT
+		_assert(player_for_repair.try_dash(Vector2.ZERO), "无移动输入时冲刺沿最后移动方向")
+		_assert(player_for_repair._dash_direction == Vector2.LEFT, "冲刺方向不再固定反向")
+		player_for_repair._play_move_animation(Vector2(1, 1).normalized())
+		_assert(player_for_repair.last_direction == "back", "右下斜向移动优先使用右向动作")
 		player_for_repair.switch_weapon()
 		_assert(player_for_repair.active_weapon == "melee", "机甲可以切换到近战武器")
 		player_for_repair.switch_weapon()

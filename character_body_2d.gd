@@ -32,6 +32,7 @@ signal mech_destroyed(resource_penalty: int)
 
 # 记录最后的朝向，用于判断停止时播放哪个待机动画
 var last_direction: String = "front"
+var _last_move_vector: Vector2 = Vector2.DOWN
 var health: int
 var shield: int
 var mech_energy: int
@@ -66,6 +67,8 @@ func _physics_process(delta):
 	# 注意：如果你没有自定义按键，默认的 ui_left/right/up/down 包含了键盘方向键。
 	# 建议在 项目 -> 项目设置 -> 输入映射 中，确保 WASD 绑定到了这些动作上。
 	var input_direction = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+	if input_direction != Vector2.ZERO:
+		_last_move_vector = input_direction.normalized()
 	if Input.is_action_just_pressed("dash"):
 		try_dash(input_direction)
 	var current_speed: float = move_speed
@@ -78,15 +81,7 @@ func _physics_process(delta):
 
 	# 2. 处理动画逻辑
 	if velocity.length() > 0:
-		# 角色正在移动
-		# 根据你的逻辑：向左(A)或向下(S) -> run_front
-		if Input.is_action_pressed("ui_left") or Input.is_action_pressed("ui_down"):
-			animated_sprite.play("run_front")
-			last_direction = "front"
-		# 向右(D)或向上(W) -> run_back
-		elif Input.is_action_pressed("ui_right") or Input.is_action_pressed("ui_up"):
-			animated_sprite.play("run_back")
-			last_direction = "back"
+		_play_move_animation(input_direction)
 	else:
 		# 角色停止移动，根据最后的状态播放待机动画
 		if last_direction == "front":
@@ -163,12 +158,30 @@ func try_dash(direction: Vector2) -> bool:
 		return false
 	_dash_direction = direction.normalized()
 	if _dash_direction == Vector2.ZERO:
-		_dash_direction = Vector2.RIGHT
+		_dash_direction = _last_move_vector
 	mech_energy -= dash_cost
 	_dash_timer = dash_duration
 	_dash_cooldown_timer = dash_cooldown
 	_emit_mech_status()
 	return true
+
+func _play_move_animation(input_direction: Vector2) -> void:
+	var move_direction: Vector2 = input_direction
+	if move_direction == Vector2.ZERO:
+		move_direction = _last_move_vector
+	# 斜向移动时优先使用横向分量，避免右下移动被下方向动作覆盖。
+	if move_direction.x > 0.0:
+		animated_sprite.play("run_back")
+		last_direction = "back"
+	elif move_direction.x < 0.0:
+		animated_sprite.play("run_front")
+		last_direction = "front"
+	elif move_direction.y > 0.0:
+		animated_sprite.play("run_front")
+		last_direction = "front"
+	else:
+		animated_sprite.play("run_back")
+		last_direction = "back"
 
 func take_damage(amount: int) -> void:
 	if is_destroyed or amount <= 0:
