@@ -10,6 +10,7 @@ var health: int
 var is_destroyed: bool = false
 var _game_state: Node
 var _is_registered: bool = false
+var _research_bonuses: Dictionary = {}
 
 func _ready() -> void:
 	add_to_group("enemy_targets")
@@ -41,6 +42,19 @@ func repair(amount: int) -> void:
 
 func is_damaged() -> bool:
 	return not is_destroyed and health < max_health
+
+func apply_research_bonus(tech_id: String) -> void:
+	if _research_bonuses.has(tech_id):
+		return
+	_research_bonuses[tech_id] = true
+	if tech_id == "generator_efficiency":
+		var was_registered: bool = _is_registered
+		if was_registered:
+			_unregister_power()
+		power_output += 10
+		if was_registered:
+			_register_power()
+	queue_redraw()
 
 func _exit_tree() -> void:
 	_unregister_power()

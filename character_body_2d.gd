@@ -39,6 +39,7 @@ var mech_energy: int
 var active_weapon: String = "ranged"
 var weapon_level: int = 1
 var is_destroyed: bool = false
+var _research_bonuses: Dictionary = {}
 
 var _dash_timer: float = 0.0
 var _dash_cooldown_timer: float = 0.0
@@ -152,6 +153,18 @@ func apply_weapon_upgrade() -> bool:
 	mech_energy = min(mech_energy + 20, max_energy)
 	_emit_mech_status()
 	return true
+
+func apply_research_bonus(tech_id: String) -> void:
+	if _research_bonuses.has(tech_id):
+		return
+	_research_bonuses[tech_id] = true
+	if tech_id == "mech_mk2":
+		max_weapon_level += 1
+		max_shield += 20
+		shield = max_shield
+		max_energy += 15
+		mech_energy = max_energy
+	_emit_mech_status()
 
 func try_dash(direction: Vector2) -> bool:
 	if is_destroyed or _dash_cooldown_timer > 0.0 or mech_energy < dash_cost:

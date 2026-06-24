@@ -7,6 +7,7 @@ class_name WallSegment
 
 var health: int
 var is_destroyed: bool = false
+var _research_bonuses: Dictionary = {}
 
 func _ready() -> void:
 	add_to_group("enemy_targets")
@@ -35,6 +36,15 @@ func repair(amount: int) -> void:
 
 func is_damaged() -> bool:
 	return not is_destroyed and health < max_health
+
+func apply_research_bonus(tech_id: String) -> void:
+	if _research_bonuses.has(tech_id):
+		return
+	_research_bonuses[tech_id] = true
+	if tech_id == "wall_plating":
+		max_health += 60
+		health += 60
+	queue_redraw()
 
 func _draw() -> void:
 	var health_ratio := float(health) / float(max_health)

@@ -1,0 +1,37 @@
+[
+  {
+    "id": "tower_overdrive",
+    "name": "哨兵塔超频",
+    "description": "提升哨兵塔伤害与射程。",
+    "costs": {"energy": 70, "iron": 25},
+    "requires": []
+  },
+  {
+    "id": "mech_mk2",
+    "name": "机甲武器 Mk2",
+    "description": "提升机甲武器等级上限与护盾容量。",
+    "costs": {"energy": 80, "iron": 35},
+    "requires": []
+  },
+  {
+    "id": "mining_efficiency",
+    "name": "采矿效率",
+    "description": "提升采矿机单次产出。",
+    "costs": {"energy": 60, "iron": 20},
+    "requires": []
+  },
+  {
+    "id": "generator_efficiency",
+    "name": "发电效率",
+    "description": "提升发电机电力供给。",
+    "costs": {"energy": 55, "carbon": 25},
+    "requires": []
+  },
+  {
+    "id": "wall_plating",
+    "name": "复合装甲墙",
+    "description": "提升城墙最大耐久。",
+    "costs": {"energy": 50, "iron": 30},
+    "requires": ["tower_overdrive"]
+  }
+]

@@ -17,6 +17,7 @@ func _run() -> void:
 	await process_frame
 
 	var game_state: Node = scene.get_node_or_null("GameState")
+	var research_manager: Node = scene.get_node_or_null("ResearchManager")
 	var base_core: Node = scene.get_node_or_null("BaseCore")
 	var game_root: Node = scene.get_node_or_null("GameRoot")
 	var resource_a: Node = scene.get_node_or_null("ResourceDeposits/EnergyDepositA")
@@ -26,9 +27,11 @@ func _run() -> void:
 	var wall_scene: PackedScene = load("res://scenes/buildings/wall_segment.tscn") as PackedScene
 	var miner_scene: PackedScene = load("res://scenes/buildings/mining_drill.tscn") as PackedScene
 	var generator_scene: PackedScene = load("res://scenes/buildings/power_generator.tscn") as PackedScene
+	var research_station_scene: PackedScene = load("res://scenes/buildings/research_station.tscn") as PackedScene
 	var enemy_scene: PackedScene = load("res://scenes/enemies/enemy.tscn") as PackedScene
 
 	_assert(game_state != null, "存在 GameState")
+	_assert(research_manager != null, "存在 ResearchManager")
 	_assert(base_core != null, "存在 BaseCore")
 	_assert(game_root != null, "存在 GameRoot")
 	_assert(resource_a != null, "存在资源点")
@@ -38,6 +41,7 @@ func _run() -> void:
 	_assert(wall_scene != null, "城墙场景可以加载")
 	_assert(miner_scene != null, "采矿机场景可以加载")
 	_assert(generator_scene != null, "发电机场景可以加载")
+	_assert(research_station_scene != null, "研究站场景可以加载")
 	_assert(enemy_scene != null, "敌人场景可以加载")
 
 	if game_state != null:
@@ -69,6 +73,8 @@ func _run() -> void:
 		_assert(player_for_repair.health == player_for_repair.max_health, "机甲初始生命值正确")
 		_assert(player_for_repair.shield == player_for_repair.max_shield, "机甲初始护盾正确")
 		_assert(player_for_repair.mech_energy == player_for_repair.max_energy, "机甲初始能量正确")
+		_assert(research_manager.tech_definitions.size() >= 5, "科技数据可以加载")
+		_assert(not research_manager.try_research("tower_overdrive"), "没有研究站时不能研究科技")
 		player_for_repair.take_damage(30)
 		_assert(player_for_repair.health == player_for_repair.max_health and player_for_repair.shield == player_for_repair.max_shield - 30, "机甲护盾会优先承伤")
 		var energy_before_dash: int = player_for_repair.mech_energy
@@ -117,6 +123,21 @@ func _run() -> void:
 		game_state.add_energy(100)
 		game_root._try_upgrade_nearest_tower()
 		_assert(built_tower.level == 2 and built_tower.damage > old_damage, "玩家可以升级哨兵塔")
+		var research_position: Vector2 = game_root._snap_to_build_grid(base_core.global_position + Vector2(0, 256))
+		game_state.add_energy(120)
+		game_state.add_resource("iron", 60)
+		game_state.add_resource("carbon", 30)
+		var production_root: Node = scene.get_node_or_null("ProductionBuildings")
+		var station_count_before: int = production_root.get_child_count()
+		game_root._try_place_research_station(research_position)
+		_assert(production_root.get_child_count() == station_count_before + 1, "合法位置能建造研究站")
+		_assert(research_manager.station_count == 1, "研究站会注册到科技管理器")
+		var tower_damage_before_research: int = built_tower.damage
+		game_state.add_energy(120)
+		game_state.add_resource("iron", 60)
+		_assert(research_manager.try_research("tower_overdrive"), "可以研究哨兵塔科技")
+		_assert(research_manager.has_technology("tower_overdrive"), "科技完成状态会记录")
+		_assert(built_tower.damage > tower_damage_before_research, "科技会强化现有哨兵塔")
 		var overlap_message: String = game_root._get_build_validation_message(valid_build_position)
 		_assert(not overlap_message.is_empty(), "防御塔不能重叠建造")
 		var walls_root: Node = scene.get_node_or_null("Walls")
@@ -128,11 +149,17 @@ func _run() -> void:
 		_assert(walls_root.get_child_count() == wall_count_before + 1, "合法位置能建造城墙")
 		var built_wall: Node = walls_root.get_child(wall_count_before)
 		_assert(built_wall.has_meta("build_costs"), "城墙会记录建造成本")
+		game_state.add_energy(100)
+		game_state.add_resource("iron", 60)
+		var wall_health_before_research: int = built_wall.max_health
+		_assert(research_manager.try_research("wall_plating"), "前置满足后可以研究城墙科技")
+		_assert(built_wall.max_health > wall_health_before_research, "科技会强化现有城墙")
 		built_wall.take_damage(60)
-		_assert(built_wall.health == 120, "城墙可以受伤")
+		_assert(built_wall.health == built_wall.max_health - 60, "城墙可以受伤")
 		player_for_repair.global_position = built_wall.global_position
+		var wall_health_before_repair: int = built_wall.health
 		game_root._try_repair_nearest_building()
-		_assert(built_wall.health == 155, "玩家可以修复城墙")
+		_assert(built_wall.health == mini(wall_health_before_repair + game_root.repair_amount, built_wall.max_health), "玩家可以修复城墙")
 		var energy_before_demolish: int = game_state.get_resource("energy")
 		var iron_before_demolish: int = game_state.get_resource("iron")
 		game_root._try_demolish_nearest_building()
@@ -140,7 +167,6 @@ func _run() -> void:
 		_assert(walls_root.get_child_count() == wall_count_before, "玩家可以拆除附近城墙")
 		_assert(game_state.get_resource("energy") >= energy_before_demolish + 10, "拆除城墙返还能量")
 		_assert(game_state.get_resource("iron") >= iron_before_demolish + 2, "拆除城墙返还铁")
-		var production_root: Node = scene.get_node_or_null("ProductionBuildings")
 		var generator_position: Vector2 = game_root._snap_to_build_grid(base_core.global_position + Vector2(384, 0))
 		game_state.add_energy(50)
 		game_state.add_resource("carbon", 20)
@@ -148,6 +174,10 @@ func _run() -> void:
 		game_root._try_place_generator(generator_position)
 		_assert(production_root.get_child_count() == production_count_before + 1, "合法位置能建造发电机")
 		_assert(game_state.power_supply == 30, "发电机提供电力")
+		game_state.add_energy(80)
+		game_state.add_resource("carbon", 40)
+		_assert(research_manager.try_research("generator_efficiency"), "可以研究发电效率科技")
+		_assert(game_state.power_supply == 40, "科技会提升现有发电机供电")
 		var miner_position: Vector2 = game_root._snap_to_build_grid(iron_deposit.global_position + Vector2(64, 0))
 		game_state.add_energy(50)
 		game_state.add_resource("iron", 30)
@@ -157,6 +187,11 @@ func _run() -> void:
 		_assert(game_state.power_demand == 8, "采矿机消耗电力")
 		var built_miner: Node = production_root.get_child(miner_count_before)
 		_assert(built_miner.has_meta("build_costs"), "采矿机会记录建造成本")
+		game_state.add_energy(80)
+		game_state.add_resource("iron", 40)
+		var miner_amount_before_research: int = built_miner.production_amount
+		_assert(research_manager.try_research("mining_efficiency"), "可以研究采矿效率科技")
+		_assert(built_miner.production_amount > miner_amount_before_research, "科技会提升现有采矿机产出")
 		var iron_before_tick: int = game_state.get_resource("iron")
 		built_miner._timer = 0.0
 		built_miner._process(0.1)
@@ -170,6 +205,11 @@ func _run() -> void:
 		game_root._try_demolish_nearest_building()
 		await process_frame
 		_assert(game_state.power_supply == 0, "拆除发电机会释放电力供给")
+		var max_weapon_level_before_research: int = player_for_repair.max_weapon_level
+		game_state.add_energy(100)
+		game_state.add_resource("iron", 50)
+		_assert(research_manager.try_research("mech_mk2"), "可以研究机甲科技")
+		_assert(player_for_repair.max_weapon_level > max_weapon_level_before_research, "科技会提升机甲成长上限")
 		game_state.add_energy(100)
 		var energy_before_death: int = game_state.energy
 		player_for_repair.take_damage(999)
@@ -196,6 +236,11 @@ func _run() -> void:
 		var generator: Node = generator_scene.instantiate()
 		_assert(generator != null, "发电机可以实例化")
 		generator.queue_free()
+
+	if research_station_scene != null:
+		var station: Node = research_station_scene.instantiate()
+		_assert(station != null, "研究站可以实例化")
+		station.queue_free()
 
 	if enemy_scene != null and base_core != null:
 		var enemy: Node = enemy_scene.instantiate()

@@ -15,6 +15,7 @@ var _aim_direction: Vector2 = Vector2.RIGHT
 var health: int
 var is_destroyed: bool = false
 var level: int = 1
+var _research_bonuses: Dictionary = {}
 
 func _ready() -> void:
 	add_to_group("defense_towers")
@@ -87,6 +88,16 @@ func upgrade() -> bool:
 	health = max_health
 	queue_redraw()
 	return true
+
+func apply_research_bonus(tech_id: String) -> void:
+	if _research_bonuses.has(tech_id):
+		return
+	_research_bonuses[tech_id] = true
+	if tech_id == "tower_overdrive":
+		damage += 6
+		attack_range += 40.0
+		fire_interval = max(fire_interval - 0.05, 0.2)
+	queue_redraw()
 
 func _fire_at(target: Node2D) -> void:
 	_aim_direction = global_position.direction_to(target.global_position)
