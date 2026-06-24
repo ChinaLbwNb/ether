@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/buildings/mining_drill.gd" id="1_miner"]
+[ext_resource type="Texture2D" path="res://art/gameplay/production/mining_drill.png" id="2_miner_texture"]
+
+[node name="MiningDrill" type="Node2D"]
+script = ExtResource("1_miner")
+asset_texture = ExtResource("2_miner_texture")
