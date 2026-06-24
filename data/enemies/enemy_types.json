@@ -1,0 +1,67 @@
+[
+  {
+    "id": "scout",
+    "name": "迅捷异虫",
+    "role": "scout",
+    "health": 34,
+    "speed": 105.0,
+    "damage": 8,
+    "attack_range": 70.0,
+    "attack_interval": 0.85,
+    "armor": 0,
+    "target_priority": "nearest",
+    "color": "#ef5b52"
+  },
+  {
+    "id": "armored",
+    "name": "甲壳异虫",
+    "role": "armored",
+    "health": 86,
+    "speed": 55.0,
+    "damage": 14,
+    "attack_range": 78.0,
+    "attack_interval": 1.15,
+    "armor": 4,
+    "target_priority": "nearest",
+    "color": "#b86b3d"
+  },
+  {
+    "id": "breaker",
+    "name": "破墙异虫",
+    "role": "breaker",
+    "health": 62,
+    "speed": 70.0,
+    "damage": 22,
+    "attack_range": 82.0,
+    "attack_interval": 1.35,
+    "armor": 2,
+    "target_priority": "buildings",
+    "color": "#f2b84b"
+  },
+  {
+    "id": "spitter",
+    "name": "酸液喷吐者",
+    "role": "ranged",
+    "health": 48,
+    "speed": 68.0,
+    "damage": 12,
+    "attack_range": 190.0,
+    "attack_interval": 1.6,
+    "armor": 1,
+    "target_priority": "nearest",
+    "color": "#73d66f"
+  },
+  {
+    "id": "elite",
+    "name": "精英撕裂者",
+    "role": "elite",
+    "health": 150,
+    "speed": 82.0,
+    "damage": 26,
+    "attack_range": 95.0,
+    "attack_interval": 0.95,
+    "armor": 6,
+    "target_priority": "core",
+    "color": "#b76cff"
+  }
+]

@@ -16,6 +16,7 @@ var _mech_energy_label: Label
 var _weapon_label: Label
 var _base_label: Label
 var _wave_label: Label
+var _wave_warning_label: Label
 var _message_label: Label
 var _result_label: Label
 var _research_label: Label
@@ -40,6 +41,7 @@ func _ready() -> void:
 	_weapon_label = _make_label("武器：电磁步枪 Lv.1")
 	_base_label = _make_label("基地：--")
 	_wave_label = _make_label("波次：准备")
+	_wave_warning_label = _make_label("预警：等待侦测")
 	_research_label = _make_label("科技：无")
 	_message_label = _make_label("E 采集，N 研究站，K 科技，Q 切武器，Space 冲刺")
 	_result_label = _make_label("")
@@ -57,6 +59,7 @@ func _ready() -> void:
 	root.add_child(_research_label)
 	root.add_child(_base_label)
 	root.add_child(_wave_label)
+	root.add_child(_wave_warning_label)
 	root.add_child(_message_label)
 	root.add_child(_result_label)
 
@@ -66,6 +69,7 @@ func _ready() -> void:
 	game_state.power_changed.connect(_on_power_changed)
 	game_state.base_health_changed.connect(_on_base_health_changed)
 	game_state.wave_status_changed.connect(_on_wave_status_changed)
+	game_state.wave_warning_changed.connect(_on_wave_warning_changed)
 	game_state.message_changed.connect(_on_message_changed)
 	game_state.game_finished.connect(_on_game_finished)
 	var player: Node = get_node(player_path)
@@ -187,6 +191,9 @@ func _on_wave_status_changed(wave: int, status: String, countdown: float, enemie
 		_wave_label.text = "波次：%d  准备 %.0f 秒  敌人 %d" % [wave + 1, countdown, enemies_alive]
 	else:
 		_wave_label.text = "波次：%d  %s  敌人 %d" % [wave, status, enemies_alive]
+
+func _on_wave_warning_changed(text: String) -> void:
+	_wave_warning_label.text = text
 
 func _on_message_changed(text: String) -> void:
 	_message_label.text = text

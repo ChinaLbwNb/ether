@@ -11,6 +11,12 @@ signal died
 @export var asset_texture: Texture2D
 @export var visual_size: Vector2 = Vector2(64, 64)
 
+var enemy_type_id: String = "scout"
+var display_name: String = "异虫"
+var role: String = "scout"
+var armor: int = 0
+var target_priority: String = "nearest"
+var tint_color: Color = Color(0.95, 0.15, 0.12, 0.95)
 var health: int
 var base_core
 var attack_target
@@ -24,6 +30,21 @@ func _ready() -> void:
 
 func setup(target_base) -> void:
 	base_core = target_base
+
+func setup_type(profile: Dictionary, wave: int = 1) -> void:
+	enemy_type_id = str(profile.get("id", enemy_type_id))
+	display_name = str(profile.get("name", display_name))
+	role = str(profile.get("role", role))
+	max_health = int(profile.get("health", max_health)) + max(wave - 1, 0) * int(profile.get("health_growth", 6))
+	move_speed = float(profile.get("speed", move_speed))
+	damage = int(profile.get("damage", damage)) + int(floor(float(wave - 1) * 1.5))
+	attack_range = float(profile.get("attack_range", attack_range))
+	attack_interval = float(profile.get("attack_interval", attack_interval))
+	armor = int(profile.get("armor", armor))
+	target_priority = str(profile.get("target_priority", target_priority))
+	tint_color = Color.html(str(profile.get("color", "#ef5b52")))
+	health = max_health
+	queue_redraw()
 
 func _physics_process(delta: float) -> void:
 	if _game_is_finished():
@@ -46,6 +67,12 @@ func _physics_process(delta: float) -> void:
 			_attack_cooldown = attack_interval
 
 func _find_attack_target() -> Node2D:
+	if target_priority == "core" and base_core != null and is_instance_valid(base_core):
+		return base_core as Node2D
+	if target_priority == "buildings":
+		var building_target: Node2D = _find_nearest_target_in_group("build_blockers")
+		if building_target != null:
+			return building_target
 	var best_target: Node2D = null
 	var best_distance: float = INF
 	for target in get_tree().get_nodes_in_group("enemy_targets"):
@@ -59,10 +86,23 @@ func _find_attack_target() -> Node2D:
 		return best_target
 	return base_core as Node2D
 
+func _find_nearest_target_in_group(group_name: String) -> Node2D:
+	var best_target: Node2D = null
+	var best_distance: float = INF
+	for target in get_tree().get_nodes_in_group(group_name):
+		if not is_instance_valid(target) or not (target is Node2D):
+			continue
+		var distance := global_position.distance_to(target.global_position)
+		if distance < best_distance:
+			best_distance = distance
+			best_target = target
+	return best_target
+
 func take_damage(amount: int) -> void:
 	if is_dead:
 		return
-	health = max(health - amount, 0)
+	var final_damage: int = maxi(amount - armor, 1)
+	health = max(health - final_damage, 0)
 	queue_redraw()
 	if health == 0:
 		is_dead = true
@@ -73,11 +113,13 @@ func take_damage(amount: int) -> void:
 func _draw() -> void:
 	var ratio := float(health) / float(max_health)
 	if asset_texture != null:
-		draw_texture_rect(asset_texture, Rect2(-visual_size * 0.5, visual_size), false)
+		draw_texture_rect(asset_texture, Rect2(-visual_size * 0.5, visual_size), false, tint_color)
 		draw_rect(Rect2(Vector2(-26, -42), Vector2(52, 5)), Color(0.12, 0.02, 0.02, 0.85))
 		draw_rect(Rect2(Vector2(-26, -42), Vector2(52 * ratio, 5)), Color(0.95, 0.15, 0.12, 0.95))
+		if role == "elite":
+			draw_arc(Vector2.ZERO, 38.0, 0.0, TAU, 48, Color(0.7, 0.35, 1.0, 0.85), 3.0)
 		return
-	draw_circle(Vector2.ZERO, 28.0, Color(0.55, 0.06, 0.12, 0.95))
+	draw_circle(Vector2.ZERO, 28.0, tint_color)
 	draw_circle(Vector2.ZERO, 17.0, Color(0.95, 0.24, 0.18, 0.95))
 	draw_rect(Rect2(Vector2(-26, -42), Vector2(52 * ratio, 5)), Color(0.95, 0.15, 0.12, 0.95))
 

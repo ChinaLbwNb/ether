@@ -6,6 +6,7 @@ signal storage_changed(current_total: int, max_total: int)
 signal power_changed(supply: int, demand: int)
 signal base_health_changed(current_health: int, max_health: int)
 signal wave_status_changed(wave: int, status: String, countdown: float, enemies_alive: int)
+signal wave_warning_changed(text: String)
 signal message_changed(text: String)
 signal game_finished(victory: bool, reason: String)
 
@@ -133,6 +134,9 @@ func set_base_health(current_health: int, max_health: int) -> void:
 
 func set_wave_status(wave: int, status: String, countdown: float, enemies_alive: int) -> void:
 	wave_status_changed.emit(wave, status, countdown, enemies_alive)
+
+func set_wave_warning(text: String) -> void:
+	wave_warning_changed.emit(text)
 
 func show_message(text: String) -> void:
 	message_changed.emit(text)

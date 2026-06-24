@@ -20,6 +20,7 @@ func _run() -> void:
 	var research_manager: Node = scene.get_node_or_null("ResearchManager")
 	var base_core: Node = scene.get_node_or_null("BaseCore")
 	var game_root: Node = scene.get_node_or_null("GameRoot")
+	var wave_manager: Node = scene.get_node_or_null("WaveManager")
 	var resource_a: Node = scene.get_node_or_null("ResourceDeposits/EnergyDepositA")
 	var iron_deposit: Node = scene.get_node_or_null("ResourceDeposits/IronDepositA")
 	var carbon_deposit: Node = scene.get_node_or_null("ResourceDeposits/CarbonDepositA")
@@ -34,6 +35,7 @@ func _run() -> void:
 	_assert(research_manager != null, "存在 ResearchManager")
 	_assert(base_core != null, "存在 BaseCore")
 	_assert(game_root != null, "存在 GameRoot")
+	_assert(wave_manager != null, "存在 WaveManager")
 	_assert(resource_a != null, "存在资源点")
 	_assert(iron_deposit != null, "存在铁矿点")
 	_assert(carbon_deposit != null, "存在碳矿点")
@@ -74,6 +76,12 @@ func _run() -> void:
 		_assert(player_for_repair.shield == player_for_repair.max_shield, "机甲初始护盾正确")
 		_assert(player_for_repair.mech_energy == player_for_repair.max_energy, "机甲初始能量正确")
 		_assert(research_manager.tech_definitions.size() >= 5, "科技数据可以加载")
+		_assert(wave_manager._enemy_types.size() >= 5, "敌人类型数据可以加载")
+		var wave_one: Dictionary = wave_manager._build_wave_composition(1)
+		var wave_four: Dictionary = wave_manager._build_wave_composition(4)
+		_assert(wave_one.has("scout"), "第一波包含轻型敌人")
+		_assert(wave_four.has("armored") and wave_four.has("breaker") and wave_four.has("spitter"), "高波次会混合重甲、破墙和远程敌人")
+		_assert(not wave_manager._format_wave_warning(4, wave_four).is_empty(), "波次预警文本可以生成")
 		_assert(not research_manager.try_research("tower_overdrive"), "没有研究站时不能研究科技")
 		player_for_repair.take_damage(30)
 		_assert(player_for_repair.health == player_for_repair.max_health and player_for_repair.shield == player_for_repair.max_shield - 30, "机甲护盾会优先承伤")
@@ -249,6 +257,33 @@ func _run() -> void:
 		enemy.take_damage(10)
 		_assert(enemy.health == 30, "敌人受伤有效")
 		enemy.queue_free()
+
+	if enemy_scene != null and base_core != null and wave_manager != null:
+		var armored_enemy: Node = enemy_scene.instantiate()
+		root.add_child(armored_enemy)
+		armored_enemy.setup_type(wave_manager._enemy_types["armored"], 2)
+		armored_enemy.setup(base_core)
+		var armored_health_before: int = armored_enemy.health
+		armored_enemy.take_damage(10)
+		_assert(armored_enemy.health == armored_health_before - 6, "重甲敌人会用护甲减伤")
+		armored_enemy.queue_free()
+
+	if enemy_scene != null and base_core != null and wave_manager != null:
+		var breaker_enemy: Node = enemy_scene.instantiate()
+		scene.add_child(breaker_enemy)
+		breaker_enemy.setup_type(wave_manager._enemy_types["breaker"], 3)
+		breaker_enemy.setup(base_core)
+		var tower_target_for_breaker: Node2D = scene.get_node_or_null("Towers").get_child(0)
+		breaker_enemy.global_position = tower_target_for_breaker.global_position + Vector2(90, 0)
+		_assert(breaker_enemy._find_attack_target() == tower_target_for_breaker, "破墙敌人会优先锁定建筑")
+		breaker_enemy.queue_free()
+
+	if enemy_scene != null and base_core != null and wave_manager != null:
+		var spitter_enemy: Node = enemy_scene.instantiate()
+		root.add_child(spitter_enemy)
+		spitter_enemy.setup_type(wave_manager._enemy_types["spitter"], 4)
+		_assert(spitter_enemy.attack_range > 150.0, "远程敌人拥有更长攻击距离")
+		spitter_enemy.queue_free()
 
 	if enemy_scene != null and base_core != null:
 		var tower_target: Node2D = scene.get_node_or_null("Towers").get_child(0)
