@@ -20,6 +20,7 @@
 [ext_resource type="Texture2D" path="res://art/gameplay/resources/carbon_ore.png" id="17_carbon_texture"]
 [ext_resource type="Script" path="res://scripts/research/research_manager.gd" id="18_research_manager"]
 [ext_resource type="PackedScene" path="res://scenes/buildings/research_station.tscn" id="19_research_station"]
+[ext_resource type="Script" path="res://scripts/maps/map_manager.gd" id="20_map_manager"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_0hol4"]
 atlas = ExtResource("2_epypp")
@@ -389,6 +390,10 @@ script = ExtResource("18_research_manager")
 game_state_path = NodePath("../GameState")
 player_path = NodePath("../CharacterBody2D")
 
+[node name="MapManager" type="Node" parent="."]
+script = ExtResource("20_map_manager")
+game_state_path = NodePath("../GameState")
+
 [node name="GameRoot" type="Node2D" parent="."]
 script = ExtResource("4_root")
 game_state_path = NodePath("../GameState")
@@ -398,6 +403,7 @@ towers_root_path = NodePath("../Towers")
 walls_root_path = NodePath("../Walls")
 production_root_path = NodePath("../ProductionBuildings")
 research_manager_path = NodePath("../ResearchManager")
+map_manager_path = NodePath("../MapManager")
 tower_scene = ExtResource("9_tower")
 wall_scene = ExtResource("13_wall")
 miner_scene = ExtResource("14_miner")
@@ -458,6 +464,7 @@ position = Vector2(560, 520)
 script = ExtResource("7_wave")
 enemy_scene = ExtResource("10_enemy")
 game_state_path = NodePath("../GameState")
+map_manager_path = NodePath("../MapManager")
 base_path = NodePath("../BaseCore")
 spawn_root_path = NodePath("../EnemySpawns")
 enemies_root_path = NodePath("../Enemies")
@@ -467,3 +474,4 @@ script = ExtResource("8_hud")
 game_state_path = NodePath("../GameState")
 player_path = NodePath("../CharacterBody2D")
 research_manager_path = NodePath("../ResearchManager")
+map_manager_path = NodePath("../MapManager")

@@ -8,6 +8,7 @@ class_name GameRoot
 @export var walls_root_path: NodePath
 @export var production_root_path: NodePath
 @export var research_manager_path: NodePath
+@export var map_manager_path: NodePath
 @export var tower_scene: PackedScene
 @export var wall_scene: PackedScene
 @export var miner_scene: PackedScene
@@ -33,6 +34,7 @@ var _towers_root: Node
 var _walls_root: Node
 var _production_root: Node
 var _research_manager: Node
+var _map_manager: Node
 var _build_mode: String = ""
 var _build_rotation_degrees: float = 0.0
 var _player_attack_cooldown: float = 0.0
@@ -45,6 +47,7 @@ func _ready() -> void:
 	_walls_root = get_node(walls_root_path)
 	_production_root = get_node(production_root_path)
 	_research_manager = get_node_or_null(research_manager_path)
+	_map_manager = get_node_or_null(map_manager_path)
 	_base_core.health_changed.connect(game_state.set_base_health)
 	_base_core.destroyed.connect(_on_base_destroyed)
 	game_state.game_finished.connect(_on_game_finished)
@@ -71,6 +74,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_set_build_mode("" if _build_mode == "miner" else "miner")
 	elif event.is_action_pressed("build_research_station"):
 		_set_build_mode("" if _build_mode == "research" else "research")
+	elif event.is_action_pressed("unlock_map_area"):
+		_try_unlock_map_area()
+	elif event.is_action_pressed("travel_map_area"):
+		_try_travel_map_area()
 	elif event.is_action_pressed("switch_weapon"):
 		_try_switch_weapon()
 	elif event.is_action_pressed("upgrade_mech"):
@@ -145,6 +152,8 @@ func _try_collect_resource() -> void:
 		game_state.show_message("附近没有可采集资源")
 		return
 	var amount: int = nearest.collect()
+	if _map_manager != null and _map_manager.has_method("apply_resource_yield"):
+		amount = _map_manager.apply_resource_yield(nearest.resource_id, amount)
 	var accepted: int = game_state.add_resource(nearest.resource_id, amount)
 	game_state.show_message("采集%s +%d" % [_get_resource_label(nearest.resource_id), accepted])
 
@@ -191,6 +200,18 @@ func _try_upgrade_mech() -> void:
 		return
 	if _player.apply_weapon_upgrade():
 		game_state.show_message("机甲武器升级到 Lv.%d" % _player.weapon_level)
+
+func _try_unlock_map_area() -> void:
+	if _map_manager == null:
+		game_state.show_message("缺少地图管理器")
+		return
+	_map_manager.unlock_next_map()
+
+func _try_travel_map_area() -> void:
+	if _map_manager == null:
+		game_state.show_message("缺少地图管理器")
+		return
+	_map_manager.travel_to_next_unlocked()
 
 func _find_nearest_upgradeable_tower() -> Node:
 	var nearest: Node = null

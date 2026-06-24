@@ -1,0 +1,29 @@
+[
+  {
+    "id": "home_base",
+    "name": "主基地",
+    "biome": "平原",
+    "description": "基地核心所在的安全区，资源均衡，敌潮压力较低。",
+    "unlock_costs": {},
+    "resource_multipliers": {"energy": 1.0, "iron": 1.0, "carbon": 1.0},
+    "enemy_pressure": 0
+  },
+  {
+    "id": "iron_ridge",
+    "name": "铁脊矿区",
+    "biome": "岩原",
+    "description": "富含铁矿的外部区域，敌潮压力略高。",
+    "unlock_costs": {"energy": 80, "iron": 30},
+    "resource_multipliers": {"energy": 0.9, "iron": 1.8, "carbon": 1.0},
+    "enemy_pressure": 2
+  },
+  {
+    "id": "carbon_marsh",
+    "name": "碳沼泽",
+    "biome": "沼泽",
+    "description": "碳资源更丰富，但敌人会更快聚集。",
+    "unlock_costs": {"energy": 90, "carbon": 35},
+    "resource_multipliers": {"energy": 0.85, "iron": 1.0, "carbon": 1.8},
+    "enemy_pressure": 3
+  }
+]

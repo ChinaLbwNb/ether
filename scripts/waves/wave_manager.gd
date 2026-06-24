@@ -3,6 +3,7 @@ class_name WaveManager
 
 @export var enemy_scene: PackedScene
 @export var game_state_path: NodePath
+@export var map_manager_path: NodePath
 @export var base_path: NodePath
 @export var spawn_root_path: NodePath
 @export var enemies_root_path: NodePath
@@ -14,6 +15,7 @@ class_name WaveManager
 @export var enemy_type_data_path: String = "res://data/enemies/enemy_types.json"
 
 var game_state: Node
+var map_manager: Node
 var _base_core: Node2D
 var _spawn_root: Node
 var _enemies_root: Node
@@ -29,6 +31,7 @@ var _next_wave_preview: Dictionary = {}
 
 func _ready() -> void:
 	game_state = get_node(game_state_path)
+	map_manager = get_node_or_null(map_manager_path)
 	_base_core = get_node(base_path)
 	_spawn_root = get_node(spawn_root_path)
 	_enemies_root = get_node(enemies_root_path)
@@ -146,6 +149,8 @@ func _dynamic_pressure_bonus() -> int:
 	bonus += int(floor(float(game_state.power_supply) / 40.0))
 	bonus += int(floor(float(get_tree().get_nodes_in_group("defense_towers").size()) / 2.0))
 	bonus += int(floor(float(get_tree().get_nodes_in_group("research_stations").size()) / 1.0))
+	if map_manager != null and map_manager.has_method("get_enemy_pressure_bonus"):
+		bonus += map_manager.get_enemy_pressure_bonus()
 	return clampi(bonus, 0, 5)
 
 func _build_spawn_queue(composition: Dictionary) -> Array[String]:
