@@ -262,6 +262,7 @@ func _try_place_tower(world_position: Vector2) -> void:
 	_assign_build_metadata(tower, costs)
 	_towers_root.add_child(tower)
 	_apply_research_to_building(tower)
+	_notify_mission_progress()
 	game_state.show_message("哨兵塔已建造")
 
 func _try_place_wall(world_position: Vector2) -> void:
@@ -285,6 +286,7 @@ func _try_place_wall(world_position: Vector2) -> void:
 	_assign_build_metadata(wall, costs)
 	_walls_root.add_child(wall)
 	_apply_research_to_building(wall)
+	_notify_mission_progress()
 	game_state.show_message("城墙已建造")
 
 func _try_place_generator(world_position: Vector2) -> void:
@@ -308,6 +310,7 @@ func _try_place_generator(world_position: Vector2) -> void:
 	_assign_build_metadata(generator, costs)
 	_production_root.add_child(generator)
 	_apply_research_to_building(generator)
+	_notify_mission_progress()
 	game_state.show_message("发电机已建造，电力 +%d" % generator.power_output)
 
 func _try_place_miner(world_position: Vector2) -> void:
@@ -336,6 +339,7 @@ func _try_place_miner(world_position: Vector2) -> void:
 	_production_root.add_child(miner)
 	miner.setup_deposit(deposit)
 	_apply_research_to_building(miner)
+	_notify_mission_progress()
 	game_state.show_message("采矿机已部署：%s" % _get_resource_label(deposit.resource_id))
 
 func _try_place_research_station(world_position: Vector2) -> void:
@@ -358,6 +362,7 @@ func _try_place_research_station(world_position: Vector2) -> void:
 	station.rotation_degrees = _build_rotation_degrees
 	_assign_build_metadata(station, costs)
 	_production_root.add_child(station)
+	_notify_mission_progress()
 	game_state.show_message("研究站已建造，按 K 打开科技面板")
 
 func _assign_build_metadata(building: Node, costs: Dictionary) -> void:
@@ -367,6 +372,11 @@ func _assign_build_metadata(building: Node, costs: Dictionary) -> void:
 func _apply_research_to_building(building: Node) -> void:
 	if _research_manager != null and _research_manager.has_method("apply_building_research"):
 		_research_manager.apply_building_research(building)
+
+func _notify_mission_progress() -> void:
+	for manager in get_tree().get_nodes_in_group("mission_manager"):
+		if manager.has_method("notify_progress_changed"):
+			manager.notify_progress_changed()
 
 func _try_demolish_nearest_building() -> void:
 	if game_state.is_finished:

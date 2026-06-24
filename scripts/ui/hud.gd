@@ -5,6 +5,7 @@ class_name GameHud
 @export var player_path: NodePath
 @export var research_manager_path: NodePath
 @export var map_manager_path: NodePath
+@export var mission_manager_path: NodePath
 
 var _energy_label: Label
 var _iron_label: Label
@@ -16,6 +17,7 @@ var _mech_shield_label: Label
 var _mech_energy_label: Label
 var _weapon_label: Label
 var _map_label: Label
+var _mission_label: Label
 var _base_label: Label
 var _wave_label: Label
 var _wave_warning_label: Label
@@ -26,6 +28,7 @@ var _research_panel: PanelContainer
 var _research_list: VBoxContainer
 var _research_manager: Node
 var _map_manager: Node
+var _mission_manager: Node
 
 func _ready() -> void:
 	var root := VBoxContainer.new()
@@ -43,6 +46,7 @@ func _ready() -> void:
 	_mech_energy_label = _make_label("机甲能量：--")
 	_weapon_label = _make_label("武器：电磁步枪 Lv.1")
 	_map_label = _make_label("区域：主基地")
+	_mission_label = _make_label("任务：初始化")
 	_base_label = _make_label("基地：--")
 	_wave_label = _make_label("波次：准备")
 	_wave_warning_label = _make_label("预警：等待侦测")
@@ -61,6 +65,7 @@ func _ready() -> void:
 	root.add_child(_mech_energy_label)
 	root.add_child(_weapon_label)
 	root.add_child(_map_label)
+	root.add_child(_mission_label)
 	root.add_child(_research_label)
 	root.add_child(_base_label)
 	root.add_child(_wave_label)
@@ -87,6 +92,9 @@ func _ready() -> void:
 	_map_manager = get_node_or_null(map_manager_path)
 	if _map_manager != null:
 		_map_manager.map_changed.connect(_on_map_changed)
+	_mission_manager = get_node_or_null(mission_manager_path)
+	if _mission_manager != null:
+		_mission_manager.mission_changed.connect(_on_mission_changed)
 	_build_research_panel()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -194,6 +202,9 @@ func _on_station_count_changed(_count: int) -> void:
 func _on_map_changed(_map_id: String, _map_name: String, _biome: String) -> void:
 	if _map_manager != null:
 		_map_label.text = _map_manager.get_map_status_text()
+
+func _on_mission_changed(title: String, objective_text: String, progress_text: String) -> void:
+	_mission_label.text = "%s  %s：%s" % [progress_text, title, objective_text]
 
 func _on_base_health_changed(current_health: int, max_health: int) -> void:
 	_base_label.text = "基地：%d / %d" % [current_health, max_health]

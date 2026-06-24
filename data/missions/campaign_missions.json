@@ -1,0 +1,38 @@
+[
+  {
+    "id": "stockpile_energy",
+    "title": "重启基地核心",
+    "description": "收集能量，让基地进入最低运行状态。",
+    "objective": {"type": "resource", "resource_id": "energy", "amount": 50}
+  },
+  {
+    "id": "build_first_tower",
+    "title": "建立第一道防线",
+    "description": "建造一座哨兵塔，确保基地不会只靠机甲硬撑。",
+    "objective": {"type": "group_count", "group": "defense_towers", "count": 1}
+  },
+  {
+    "id": "build_research_station",
+    "title": "恢复科研链路",
+    "description": "建造研究站，为后续科技解锁做准备。",
+    "objective": {"type": "group_count", "group": "research_stations", "count": 1}
+  },
+  {
+    "id": "research_tower_overdrive",
+    "title": "完成防御科技",
+    "description": "研究哨兵塔超频，让基地防线进入可成长状态。",
+    "objective": {"type": "research", "tech_id": "tower_overdrive"}
+  },
+  {
+    "id": "unlock_iron_ridge",
+    "title": "打开铁脊矿区",
+    "description": "解锁第一个外部资源区，开始地图层推进。",
+    "objective": {"type": "map_unlocked", "map_id": "iron_ridge"}
+  },
+  {
+    "id": "survive_second_wave",
+    "title": "稳定基地防线",
+    "description": "守住第 2 波敌潮，验证基地、机甲与防御塔能协同作战。",
+    "objective": {"type": "survive_wave", "wave": 2}
+  }
+]
