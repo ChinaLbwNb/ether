@@ -456,3 +456,4 @@ enemies_root_path = NodePath("../Enemies")
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("8_hud")
 game_state_path = NodePath("../GameState")
+player_path = NodePath("../CharacterBody2D")

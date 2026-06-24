@@ -18,6 +18,8 @@ signal game_finished(victory: bool, reason: String)
 @export var tower_upgrade_cost: int = 35
 @export var miner_energy_cost: int = 30
 @export var generator_energy_cost: int = 25
+@export var mech_upgrade_energy_cost: int = 60
+@export var mech_upgrade_iron_cost: int = 20
 
 var resources: Dictionary = {}
 var energy: int = 0
@@ -38,7 +40,7 @@ func _ready() -> void:
 func _broadcast_initial_state() -> void:
 	_emit_all_resources()
 	power_changed.emit(power_supply, power_demand)
-	message_changed.emit("E 采集，B 塔，C 墙，V 发电机，M 采矿机，R 旋转，X 拆除")
+	message_changed.emit("E 采集，左键攻击，Q 切武器，Space 冲刺，T 升级机甲")
 
 func add_energy(amount: int) -> void:
 	add_resource("energy", amount)
@@ -118,6 +120,9 @@ func get_miner_costs() -> Dictionary:
 
 func get_generator_costs() -> Dictionary:
 	return {"energy": generator_energy_cost, "carbon": 10}
+
+func get_mech_upgrade_costs() -> Dictionary:
+	return {"energy": mech_upgrade_energy_cost, "iron": mech_upgrade_iron_cost}
 
 func set_base_health(current_health: int, max_health: int) -> void:
 	base_health_changed.emit(current_health, max_health)

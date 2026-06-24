@@ -2,12 +2,17 @@ extends CanvasLayer
 class_name GameHud
 
 @export var game_state_path: NodePath
+@export var player_path: NodePath
 
 var _energy_label: Label
 var _iron_label: Label
 var _carbon_label: Label
 var _storage_label: Label
 var _power_label: Label
+var _mech_health_label: Label
+var _mech_shield_label: Label
+var _mech_energy_label: Label
+var _weapon_label: Label
 var _base_label: Label
 var _wave_label: Label
 var _message_label: Label
@@ -24,9 +29,13 @@ func _ready() -> void:
 	_carbon_label = _make_label("碳：0")
 	_storage_label = _make_label("仓储：0 / 0")
 	_power_label = _make_label("电力：0 / 0")
+	_mech_health_label = _make_label("机甲：--")
+	_mech_shield_label = _make_label("护盾：--")
+	_mech_energy_label = _make_label("机甲能量：--")
+	_weapon_label = _make_label("武器：电磁步枪 Lv.1")
 	_base_label = _make_label("基地：--")
 	_wave_label = _make_label("波次：准备")
-	_message_label = _make_label("E 采集，B 塔，C 墙，V 发电机，M 采矿机，R 旋转，X 拆除")
+	_message_label = _make_label("E 采集，左键攻击，Q 切武器，Space 冲刺，T 升级机甲")
 	_result_label = _make_label("")
 	_result_label.add_theme_font_size_override("font_size", 30)
 
@@ -35,6 +44,10 @@ func _ready() -> void:
 	root.add_child(_carbon_label)
 	root.add_child(_storage_label)
 	root.add_child(_power_label)
+	root.add_child(_mech_health_label)
+	root.add_child(_mech_shield_label)
+	root.add_child(_mech_energy_label)
+	root.add_child(_weapon_label)
 	root.add_child(_base_label)
 	root.add_child(_wave_label)
 	root.add_child(_message_label)
@@ -48,6 +61,9 @@ func _ready() -> void:
 	game_state.wave_status_changed.connect(_on_wave_status_changed)
 	game_state.message_changed.connect(_on_message_changed)
 	game_state.game_finished.connect(_on_game_finished)
+	var player: Node = get_node(player_path)
+	if player.has_signal("mech_status_changed"):
+		player.mech_status_changed.connect(_on_mech_status_changed)
 
 func _make_label(text: String) -> Label:
 	var label := Label.new()
@@ -76,6 +92,12 @@ func _on_power_changed(supply: int, demand: int) -> void:
 		_power_label.add_theme_color_override("font_color", Color(1.0, 0.25, 0.18, 1.0))
 	else:
 		_power_label.add_theme_color_override("font_color", Color(0.9, 0.98, 1.0, 1.0))
+
+func _on_mech_status_changed(health: int, max_health: int, shield: int, max_shield: int, mech_energy: int, max_energy: int, weapon_name: String, weapon_level: int) -> void:
+	_mech_health_label.text = "机甲：%d / %d" % [health, max_health]
+	_mech_shield_label.text = "护盾：%d / %d" % [shield, max_shield]
+	_mech_energy_label.text = "机甲能量：%d / %d" % [mech_energy, max_energy]
+	_weapon_label.text = "武器：%s Lv.%d" % [weapon_name, weapon_level]
 
 func _on_base_health_changed(current_health: int, max_health: int) -> void:
 	_base_label.text = "基地：%d / %d" % [current_health, max_health]

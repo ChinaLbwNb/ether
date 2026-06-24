@@ -44,6 +44,8 @@ func _ready() -> void:
 	_base_core.health_changed.connect(game_state.set_base_health)
 	_base_core.destroyed.connect(_on_base_destroyed)
 	game_state.game_finished.connect(_on_game_finished)
+	if _player.has_signal("mech_destroyed"):
+		_player.mech_destroyed.connect(_on_mech_destroyed)
 
 func _process(delta: float) -> void:
 	_player_attack_cooldown = max(_player_attack_cooldown - delta, 0.0)
@@ -63,6 +65,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_set_build_mode("" if _build_mode == "generator" else "generator")
 	elif event.is_action_pressed("build_miner"):
 		_set_build_mode("" if _build_mode == "miner" else "miner")
+	elif event.is_action_pressed("switch_weapon"):
+		_try_switch_weapon()
+	elif event.is_action_pressed("upgrade_mech"):
+		_try_upgrade_mech()
 	elif event.is_action_pressed("rotate_building") and _is_building():
 		_rotate_current_building()
 	elif event.is_action_pressed("demolish_building") and not _is_building():
@@ -158,6 +164,23 @@ func _try_upgrade_nearest_tower() -> void:
 		return
 	if target.upgrade():
 		game_state.show_message("哨兵塔升级到 Lv.%d" % target.level)
+
+func _try_switch_weapon() -> void:
+	if not _player.has_method("switch_weapon"):
+		return
+	_player.switch_weapon()
+	game_state.show_message("当前武器：%s Lv.%d" % [_player.get_active_weapon_label(), _player.weapon_level])
+
+func _try_upgrade_mech() -> void:
+	if not _player.has_method("can_upgrade_weapon") or not _player.can_upgrade_weapon():
+		game_state.show_message("机甲武器已达到当前最高等级")
+		return
+	var costs: Dictionary = game_state.get_mech_upgrade_costs()
+	if not game_state.spend_resources(costs):
+		game_state.show_message("资源不足，机甲升级需要 %s" % game_state.format_cost(costs))
+		return
+	if _player.apply_weapon_upgrade():
+		game_state.show_message("机甲武器升级到 Lv.%d" % _player.weapon_level)
 
 func _find_nearest_upgradeable_tower() -> Node:
 	var nearest: Node = null
@@ -375,18 +398,35 @@ func _try_player_attack(world_position: Vector2) -> void:
 	if target == null:
 		game_state.show_message("没有锁定敌人")
 		return
-	target.take_damage(player_attack_damage)
+	var distance: float = _player.global_position.distance_to(target.global_position)
+	var weapon_range: float = player_attack_range
+	var weapon_damage: int = player_attack_damage
+	var weapon_label: String = "机甲"
+	if _player.has_method("get_active_weapon_range"):
+		weapon_range = _player.get_active_weapon_range()
+		weapon_damage = _player.get_active_weapon_damage()
+		weapon_label = _player.get_active_weapon_label()
+	if distance > weapon_range:
+		game_state.show_message("%s 射程不足" % weapon_label)
+		return
+	if _player.has_method("try_spend_weapon_energy") and not _player.try_spend_weapon_energy():
+		game_state.show_message("机甲能量不足")
+		return
+	target.take_damage(weapon_damage)
 	_player_attack_cooldown = player_attack_interval
-	game_state.show_message("机甲攻击命中")
+	game_state.show_message("%s 命中，伤害 %d" % [weapon_label, weapon_damage])
 
 func _find_enemy_near_cursor(world_position: Vector2) -> Node:
 	var best_enemy: Node = null
 	var best_cursor_distance := cursor_target_radius
+	var attack_range: float = player_attack_range
+	if _player.has_method("get_active_weapon_range"):
+		attack_range = _player.get_active_weapon_range()
 	for enemy in get_tree().get_nodes_in_group("enemies"):
 		if not is_instance_valid(enemy) or enemy.is_dead:
 			continue
 		var player_distance := _player.global_position.distance_to(enemy.global_position)
-		if player_distance > player_attack_range:
+		if player_distance > attack_range:
 			continue
 		var cursor_distance := world_position.distance_to(enemy.global_position)
 		if cursor_distance <= best_cursor_distance:
@@ -396,6 +436,11 @@ func _find_enemy_near_cursor(world_position: Vector2) -> Node:
 
 func _on_base_destroyed() -> void:
 	game_state.finish_game(false, "基地核心被摧毁，防守失败")
+
+func _on_mech_destroyed(resource_penalty: int) -> void:
+	if resource_penalty > 0:
+		game_state.spend_resources({"energy": resource_penalty})
+	game_state.show_message("机甲被击毁并回收，损失能量 %d" % resource_penalty)
 
 func _on_game_finished(_victory: bool, _reason: String) -> void:
 	_build_mode = ""
