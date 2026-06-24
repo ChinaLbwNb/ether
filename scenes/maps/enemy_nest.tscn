@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/maps/enemy_nest.gd" id="1_nest"]
+
+[node name="EnemyNest" type="Node2D"]
+script = ExtResource("1_nest")
+max_health = 200
+spawn_interval = 8.0
+max_enemies_around = 4
+enemy_type_id = "scout"
+display_name = "敌人巢穴"

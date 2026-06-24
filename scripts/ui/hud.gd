@@ -4,6 +4,7 @@ class_name GameHud
 @export var game_state_path: NodePath
 @export var player_path: NodePath
 @export var research_manager_path: NodePath
+@export var map_manager_path: NodePath
 
 var _energy_label: Label
 var _iron_label: Label
@@ -20,6 +21,7 @@ var _wave_warning_label: Label
 var _message_label: Label
 var _result_label: Label
 var _research_label: Label
+var _zone_label: Label
 var _research_panel: PanelContainer
 var _research_list: VBoxContainer
 var _research_manager: Node
@@ -43,7 +45,8 @@ func _ready() -> void:
 	_wave_label = _make_label("波次：准备")
 	_wave_warning_label = _make_label("预警：等待侦测")
 	_research_label = _make_label("科技：无")
-	_message_label = _make_label("E 采集，N 研究站，K 科技，Q 切武器，Space 冲刺")
+	_zone_label = _make_label("区域：主基地")
+	_message_label = _make_label("E 采集/传送，N 研究站，K 科技，Q 切武器，Space 冲刺")
 	_result_label = _make_label("")
 	_result_label.add_theme_font_size_override("font_size", 30)
 
@@ -57,6 +60,7 @@ func _ready() -> void:
 	root.add_child(_mech_energy_label)
 	root.add_child(_weapon_label)
 	root.add_child(_research_label)
+	root.add_child(_zone_label)
 	root.add_child(_base_label)
 	root.add_child(_wave_label)
 	root.add_child(_wave_warning_label)
@@ -79,6 +83,9 @@ func _ready() -> void:
 	if _research_manager != null:
 		_research_manager.research_changed.connect(_on_research_changed)
 		_research_manager.station_count_changed.connect(_on_station_count_changed)
+	var map_manager: Node = get_node_or_null(map_manager_path)
+	if map_manager != null and map_manager.has_signal("zone_changed"):
+		map_manager.zone_changed.connect(_on_zone_changed)
 	_build_research_panel()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -200,3 +207,9 @@ func _on_message_changed(text: String) -> void:
 
 func _on_game_finished(victory: bool, reason: String) -> void:
 	_result_label.text = ("胜利：" if victory else "失败：") + reason
+
+func _on_zone_changed(zone_id: String, zone_name: String) -> void:
+	if zone_name == "":
+		_zone_label.text = "区域：荒野"
+	else:
+		_zone_label.text = "区域：%s" % zone_name

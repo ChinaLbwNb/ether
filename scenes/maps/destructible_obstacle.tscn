@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/maps/destructible_obstacle.gd" id="1_obs"]
+
+[node name="DestructibleObstacle" type="StaticBody2D"]
+script = ExtResource("1_obs")
+max_health = 80
+obstacle_type = "rock"
+size = Vector2(64, 64)

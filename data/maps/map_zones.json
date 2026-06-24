@@ -1,0 +1,54 @@
+[
+  {
+    "id": "home_base",
+    "name": "主基地",
+    "biome": "temperate",
+    "center_x": 260,
+    "center_y": 0,
+    "radius": 600,
+    "fog_revealed": true,
+    "description": "玩家的主基地，初始安全区"
+  },
+  {
+    "id": "eastern_wastes",
+    "name": "东部荒原",
+    "biome": "desert",
+    "center_x": 1200,
+    "center_y": 0,
+    "radius": 500,
+    "fog_revealed": false,
+    "description": "沙漠地带，视野受限，铁矿丰富",
+    "modifiers": {
+      "player_vision_multiplier": 0.7,
+      "enemy_speed_multiplier": 1.1
+    }
+  },
+  {
+    "id": "frozen_tundra",
+    "name": "冰冻苔原",
+    "biome": "ice",
+    "center_x": 260,
+    "center_y": -900,
+    "radius": 500,
+    "fog_revealed": false,
+    "description": "冰雪地带，移动减速，碳矿丰富",
+    "modifiers": {
+      "player_speed_multiplier": 0.85,
+      "enemy_speed_multiplier": 0.9
+    }
+  },
+  {
+    "id": "acid_swamp",
+    "name": "酸蚀沼泽",
+    "biome": "swamp",
+    "center_x": 260,
+    "center_y": 900,
+    "radius": 500,
+    "fog_revealed": false,
+    "description": "毒沼地带，建筑持续受损，能量矿丰富",
+    "modifiers": {
+      "building_damage_per_second": 2,
+      "enemy_health_multiplier": 1.2
+    }
+  }
+]

@@ -132,6 +132,10 @@ func _try_place_current_building(world_position: Vector2) -> void:
 func _try_collect_resource() -> void:
 	if game_state.is_finished:
 		return
+	var nearest_teleporter: Node = _find_nearest_teleporter()
+	if nearest_teleporter != null:
+		nearest_teleporter.interact()
+		return
 	var nearest: Node = null
 	var nearest_distance := collect_radius
 	for node in get_tree().get_nodes_in_group("resource_deposits"):
@@ -147,6 +151,20 @@ func _try_collect_resource() -> void:
 	var amount: int = nearest.collect()
 	var accepted: int = game_state.add_resource(nearest.resource_id, amount)
 	game_state.show_message("采集%s +%d" % [_get_resource_label(nearest.resource_id), accepted])
+
+func _find_nearest_teleporter() -> Node:
+	var nearest: Node = null
+	var nearest_distance: float = collect_radius
+	for tp in get_tree().get_nodes_in_group("teleporters"):
+		if not is_instance_valid(tp) or not (tp is Node2D):
+			continue
+		if not tp.has_method("can_interact") or not tp.can_interact():
+			continue
+		var distance: float = _player.global_position.distance_to(tp.global_position)
+		if distance <= nearest_distance:
+			nearest = tp
+			nearest_distance = distance
+	return nearest
 
 func _try_repair_nearest_building() -> void:
 	if game_state.is_finished:

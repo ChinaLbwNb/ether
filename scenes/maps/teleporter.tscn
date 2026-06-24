@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/maps/teleporter.gd" id="1_tele"]
+
+[node name="Teleporter" type="Node2D"]
+script = ExtResource("1_tele")
+target_position = Vector2(260, 0)
+target_label = "主基地"
+display_name = "传送点"

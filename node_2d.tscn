@@ -20,6 +20,11 @@
 [ext_resource type="Texture2D" path="res://art/gameplay/resources/carbon_ore.png" id="17_carbon_texture"]
 [ext_resource type="Script" path="res://scripts/research/research_manager.gd" id="18_research_manager"]
 [ext_resource type="PackedScene" path="res://scenes/buildings/research_station.tscn" id="19_research_station"]
+[ext_resource type="Script" path="res://scripts/maps/map_manager.gd" id="20_map_manager"]
+[ext_resource type="Script" path="res://scripts/maps/fog_of_war.gd" id="21_fog"]
+[ext_resource type="PackedScene" path="res://scenes/maps/teleporter.tscn" id="22_teleporter"]
+[ext_resource type="PackedScene" path="res://scenes/maps/enemy_nest.tscn" id="23_enemy_nest"]
+[ext_resource type="PackedScene" path="res://scenes/maps/destructible_obstacle.tscn" id="24_obstacle"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_0hol4"]
 atlas = ExtResource("2_epypp")
@@ -389,6 +394,12 @@ script = ExtResource("18_research_manager")
 game_state_path = NodePath("../GameState")
 player_path = NodePath("../CharacterBody2D")
 
+[node name="MapManager" type="Node" parent="."]
+script = ExtResource("20_map_manager")
+zones_data_path = "res://data/maps/map_zones.json"
+player_path = NodePath("../CharacterBody2D")
+game_state_path = NodePath("../GameState")
+
 [node name="GameRoot" type="Node2D" parent="."]
 script = ExtResource("4_root")
 game_state_path = NodePath("../GameState")
@@ -438,6 +449,180 @@ total_amount = 150
 collect_amount = 12
 asset_texture = ExtResource("17_carbon_texture")
 
+[node name="IronDeposit_East1" type="Node2D" parent="ResourceDeposits"]
+position = Vector2(1050, -120)
+script = ExtResource("6_resource")
+resource_id = "iron"
+total_amount = 300
+collect_amount = 15
+asset_texture = ExtResource("16_iron_texture")
+
+[node name="IronDeposit_East2" type="Node2D" parent="ResourceDeposits"]
+position = Vector2(1300, 80)
+script = ExtResource("6_resource")
+resource_id = "iron"
+total_amount = 250
+collect_amount = 15
+asset_texture = ExtResource("16_iron_texture")
+
+[node name="CarbonDeposit_Ice1" type="Node2D" parent="ResourceDeposits"]
+position = Vector2(80, -850)
+script = ExtResource("6_resource")
+resource_id = "carbon"
+total_amount = 280
+collect_amount = 14
+asset_texture = ExtResource("17_carbon_texture")
+
+[node name="CarbonDeposit_Ice2" type="Node2D" parent="ResourceDeposits"]
+position = Vector2(380, -1000)
+script = ExtResource("6_resource")
+resource_id = "carbon"
+total_amount = 320
+collect_amount = 14
+asset_texture = ExtResource("17_carbon_texture")
+
+[node name="EnergyDeposit_Swamp1" type="Node2D" parent="ResourceDeposits"]
+position = Vector2(150, 780)
+script = ExtResource("6_resource")
+total_amount = 200
+collect_amount = 10
+asset_texture = ExtResource("12_resource_texture")
+
+[node name="EnergyDeposit_Swamp2" type="Node2D" parent="ResourceDeposits"]
+position = Vector2(400, 950)
+script = ExtResource("6_resource")
+total_amount = 250
+collect_amount = 10
+asset_texture = ExtResource("12_resource_texture")
+
+[node name="Teleporters" type="Node2D" parent="."]
+
+[node name="Teleport_HomeBase" parent="Teleporters" instance=ExtResource("22_teleporter")]
+position = Vector2(120, 80)
+target_position = Vector2(1100, 0)
+target_label = "东部荒原"
+display_name = "主基地传送点"
+
+[node name="Teleport_East" parent="Teleporters" instance=ExtResource("22_teleporter")]
+position = Vector2(1100, 0)
+target_position = Vector2(120, 80)
+target_label = "主基地"
+display_name = "东部传送点"
+portal_color = Color(1, 0.8, 0.3, 0.9)
+
+[node name="Teleport_Ice" parent="Teleporters" instance=ExtResource("22_teleporter")]
+position = Vector2(180, -800)
+target_position = Vector2(120, 80)
+target_label = "主基地"
+display_name = "冰原传送点"
+portal_color = Color(0.5, 0.85, 1, 0.9)
+
+[node name="Teleport_Swamp" parent="Teleporters" instance=ExtResource("22_teleporter")]
+position = Vector2(200, 820)
+target_position = Vector2(120, 80)
+target_label = "主基地"
+display_name = "沼泽传送点"
+portal_color = Color(0.4, 1, 0.5, 0.9)
+
+[node name="EnemyNests" type="Node2D" parent="."]
+
+[node name="Nest_East1" parent="EnemyNests" instance=ExtResource("23_enemy_nest")]
+position = Vector2(1350, -200)
+max_health = 250
+spawn_interval = 7.0
+enemy_type_id = "scout"
+display_name = "东部巢穴 α"
+enemy_scene = ExtResource("10_enemy")
+
+[node name="Nest_East2" parent="EnemyNests" instance=ExtResource("23_enemy_nest")]
+position = Vector2(1400, 250)
+max_health = 300
+spawn_interval = 9.0
+enemy_type_id = "brute"
+display_name = "东部巢穴 β"
+enemy_scene = ExtResource("10_enemy")
+
+[node name="Nest_Ice" parent="EnemyNests" instance=ExtResource("23_enemy_nest")]
+position = Vector2(450, -1100)
+max_health = 280
+spawn_interval = 10.0
+enemy_type_id = "scout"
+display_name = "冰原巢穴"
+nest_color = Color(0.5, 0.7, 0.9, 0.95)
+enemy_scene = ExtResource("10_enemy")
+
+[node name="Nest_Swamp" parent="EnemyNests" instance=ExtResource("23_enemy_nest")]
+position = Vector2(500, 1050)
+max_health = 320
+spawn_interval = 8.0
+enemy_type_id = "ranged"
+display_name = "沼泽巢穴"
+nest_color = Color(0.3, 0.8, 0.4, 0.95)
+enemy_scene = ExtResource("10_enemy")
+
+[node name="Obstacles" type="Node2D" parent="."]
+
+[node name="Rock_Home1" parent="Obstacles" instance=ExtResource("24_obstacle")]
+position = Vector2(-500, 50)
+max_health = 100
+obstacle_type = "rock"
+size = Vector2(70, 70)
+drop_resources = {"iron": 5}
+
+[node name="Rock_Home2" parent="Obstacles" instance=ExtResource("24_obstacle")]
+position = Vector2(-450, -180)
+max_health = 80
+obstacle_type = "rock"
+size = Vector2(55, 55)
+drop_resources = {"iron": 3}
+
+[node name="Ruin_Home1" parent="Obstacles" instance=ExtResource("24_obstacle")]
+position = Vector2(500, -100)
+max_health = 120
+obstacle_type = "ruin"
+size = Vector2(80, 75)
+drop_resources = {"iron": 8, "carbon": 5}
+
+[node name="Crystal_East1" parent="Obstacles" instance=ExtResource("24_obstacle")]
+position = Vector2(950, -250)
+max_health = 60
+obstacle_type = "crystal"
+size = Vector2(50, 60)
+drop_resources = {"energy": 15}
+obstacle_color = Color(0.3, 0.7, 1, 0.95)
+
+[node name="Rock_East1" parent="Obstacles" instance=ExtResource("24_obstacle")]
+position = Vector2(1200, -350)
+max_health = 150
+obstacle_type = "rock"
+size = Vector2(80, 80)
+drop_resources = {"iron": 10}
+obstacle_color = Color(0.6, 0.5, 0.35, 0.95)
+
+[node name="Rock_Ice1" parent="Obstacles" instance=ExtResource("24_obstacle")]
+position = Vector2(50, -1000)
+max_health = 120
+obstacle_type = "rock"
+size = Vector2(75, 75)
+drop_resources = {"iron": 6, "carbon": 4}
+obstacle_color = Color(0.7, 0.8, 0.9, 0.95)
+
+[node name="Crystal_Ice1" parent="Obstacles" instance=ExtResource("24_obstacle")]
+position = Vector2(350, -700)
+max_health = 70
+obstacle_type = "crystal"
+size = Vector2(55, 65)
+drop_resources = {"energy": 12}
+obstacle_color = Color(0.6, 0.85, 1, 0.95)
+
+[node name="Ruin_Swamp1" parent="Obstacles" instance=ExtResource("24_obstacle")]
+position = Vector2(350, 700)
+max_health = 140
+obstacle_type = "ruin"
+size = Vector2(85, 80)
+drop_resources = {"carbon": 8, "energy": 6}
+obstacle_color = Color(0.35, 0.5, 0.3, 0.95)
+
 [node name="Towers" type="Node2D" parent="."]
 
 [node name="Walls" type="Node2D" parent="."]
@@ -462,8 +647,14 @@ base_path = NodePath("../BaseCore")
 spawn_root_path = NodePath("../EnemySpawns")
 enemies_root_path = NodePath("../Enemies")
 
+[node name="FogOfWar" type="Node2D" parent="."]
+script = ExtResource("21_fog")
+player_path = NodePath("../CharacterBody2D")
+map_manager_path = NodePath("../MapManager")
+
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("8_hud")
 game_state_path = NodePath("../GameState")
 player_path = NodePath("../CharacterBody2D")
 research_manager_path = NodePath("../ResearchManager")
+map_manager_path = NodePath("../MapManager")
