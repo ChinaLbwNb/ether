@@ -330,14 +330,10 @@ func _on_start_pressed() -> void:
 
 func _on_sandbox_res_mult(mult: float) -> void:
 	_sandbox_res_mult = mult
-	_update_sandbox_res_buttons()
-	var label := _sandbox_config_panel.get_node("ResMultLabel")
-	label.text = "资源倍率：%.1fx" % mult
-
-func _update_sandbox_res_buttons() -> void:
 	for btn in _sandbox_res_buttons:
 		btn.disabled = false
-	pass
+	var label := _sandbox_config_panel.get_node("ResMultLabel")
+	label.text = "资源倍率：%.1fx" % mult
 
 func _on_sandbox_enemy_str(mult: float) -> void:
 	_sandbox_enemy_str = mult
