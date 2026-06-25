@@ -1,0 +1,173 @@
+[
+  {
+    "id": "q01_first_generator",
+    "name": "初来乍到",
+    "description": "建造一座发电机，为基地提供电力。",
+    "type": "build",
+    "target": {
+      "building_type": "power_generator",
+      "count": 1
+    },
+    "rewards": {
+      "energy": 20,
+      "iron": 10
+    },
+    "next_quest": "q02_gather_resources",
+    "is_main": true
+  },
+  {
+    "id": "q02_gather_resources",
+    "name": "采集资源",
+    "description": "采集 50 铁矿和 50 碳矿。",
+    "type": "collect",
+    "target": {
+      "resources": {
+        "iron": 50,
+        "carbon": 50
+      }
+    },
+    "rewards": {
+      "energy": 30
+    },
+    "next_quest": "q03_base_defense",
+    "is_main": true
+  },
+  {
+    "id": "q03_base_defense",
+    "name": "基地防线",
+    "description": "建造 3 座哨兵塔和 5 段城墙。",
+    "type": "build",
+    "target": {
+      "buildings": {
+        "sentry_tower": 3,
+        "wall_segment": 5
+      }
+    },
+    "rewards": {
+      "energy": 40,
+      "iron": 20
+    },
+    "next_quest": "q04_research_start",
+    "is_main": true
+  },
+  {
+    "id": "q04_research_start",
+    "name": "科技启蒙",
+    "description": "建造研究站并研究「哨兵塔超频」科技。",
+    "type": "research",
+    "target": {
+      "tech_id": "sentry_overclock"
+    },
+    "rewards": {
+      "energy": 50,
+      "carbon": 30
+    },
+    "next_quest": "q05_explore_east",
+    "is_main": true
+  },
+  {
+    "id": "q05_explore_east",
+    "name": "向东探索",
+    "description": "通过传送点到达东部荒原，摧毁 2 个敌人巢穴。",
+    "type": "destroy_nests",
+    "target": {
+      "zone_id": "eastern_wastes",
+      "count": 2
+    },
+    "rewards": {
+      "iron": 50,
+      "energy": 40
+    },
+    "next_quest": "q06_resource_expansion",
+    "is_main": true
+  },
+  {
+    "id": "q06_resource_expansion",
+    "name": "资源扩张",
+    "description": "建造 2 座采矿机，实现资源自动生产。",
+    "type": "build",
+    "target": {
+      "building_type": "mining_drill",
+      "count": 2
+    },
+    "rewards": {
+      "energy": 60,
+      "carbon": 40
+    },
+    "next_quest": "q07_build_rift",
+    "is_main": true
+  },
+  {
+    "id": "q07_build_rift",
+    "name": "裂隙传送门",
+    "description": "建造裂隙传送门并将其充能至 100%。",
+    "type": "rift_charge",
+    "target": {
+      "charge_percent": 100
+    },
+    "rewards": {
+      "energy": 100
+    },
+    "next_quest": "q08_final_defense",
+    "is_main": true
+  },
+  {
+    "id": "q08_final_defense",
+    "name": "最终防御",
+    "description": "守住第 5 波敌人进攻，保护裂隙充能完成！",
+    "type": "survive_wave",
+    "target": {
+      "wave": 5
+    },
+    "rewards": {},
+    "next_quest": "",
+    "is_main": true,
+    "is_final": true
+  },
+  {
+    "id": "qs_ice_explorer",
+    "name": "冰原探险",
+    "description": "探索冰冻苔原区域。",
+    "type": "reach_zone",
+    "target": {
+      "zone_id": "frozen_tundra"
+    },
+    "rewards": {
+      "carbon": 30,
+      "energy": 20
+    },
+    "next_quest": "",
+    "is_main": false
+  },
+  {
+    "id": "qs_swamp_clearance",
+    "name": "沼泽清剿",
+    "description": "摧毁沼泽中的敌人巢穴。",
+    "type": "destroy_nests",
+    "target": {
+      "zone_id": "acid_swamp",
+      "count": 1
+    },
+    "rewards": {
+      "energy": 50,
+      "iron": 25
+    },
+    "next_quest": "",
+    "is_main": false
+  },
+  {
+    "id": "qs_master_builder",
+    "name": "建筑大师",
+    "description": "建造 10 座各类建筑。",
+    "type": "build_total",
+    "target": {
+      "count": 10
+    },
+    "rewards": {
+      "iron": 40,
+      "carbon": 40
+    },
+    "next_quest": "",
+    "is_main": false
+  }
+]

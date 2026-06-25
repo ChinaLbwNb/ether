@@ -5,6 +5,7 @@ class_name GameHud
 @export var player_path: NodePath
 @export var research_manager_path: NodePath
 @export var map_manager_path: NodePath
+@export var quest_manager_path: NodePath
 
 var _energy_label: Label
 var _iron_label: Label
@@ -25,6 +26,11 @@ var _zone_label: Label
 var _research_panel: PanelContainer
 var _research_list: VBoxContainer
 var _research_manager: Node
+var _quest_panel: PanelContainer
+var _quest_title_label: Label
+var _quest_progress_label: Label
+var _quest_desc_label: Label
+var _quest_manager: Node
 
 func _ready() -> void:
 	var root := VBoxContainer.new()
@@ -86,7 +92,14 @@ func _ready() -> void:
 	var map_manager: Node = get_node_or_null(map_manager_path)
 	if map_manager != null and map_manager.has_signal("zone_changed"):
 		map_manager.zone_changed.connect(_on_zone_changed)
+	_quest_manager = get_node_or_null(quest_manager_path)
+	if _quest_manager != null:
+		if _quest_manager.has_signal("main_quest_updated"):
+			_quest_manager.main_quest_updated.connect(_on_main_quest_updated)
+		if _quest_manager.has_signal("quest_completed"):
+			_quest_manager.quest_completed.connect(_on_quest_completed)
 	_build_research_panel()
+	_build_quest_panel()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_research"):
@@ -213,3 +226,50 @@ func _on_zone_changed(zone_id: String, zone_name: String) -> void:
 		_zone_label.text = "区域：荒野"
 	else:
 		_zone_label.text = "区域：%s" % zone_name
+
+func _build_quest_panel() -> void:
+	_quest_panel = PanelContainer.new()
+	_quest_panel.position = Vector2(18, 370)
+	_quest_panel.custom_minimum_size = Vector2(320, 0)
+	add_child(_quest_panel)
+	var quest_vbox := VBoxContainer.new()
+	quest_vbox.add_theme_constant_override("separation", 4)
+	_quest_panel.add_child(quest_vbox)
+	var header_label: Label = _make_label("★ 当前任务")
+	header_label.add_theme_font_size_override("font_size", 22)
+	quest_vbox.add_child(header_label)
+	_quest_title_label = _make_label("暂无任务")
+	_quest_title_label.add_theme_font_size_override("font_size", 18)
+	quest_vbox.add_child(_quest_title_label)
+	_quest_progress_label = _make_label("进度：--")
+	quest_vbox.add_child(_quest_progress_label)
+	_quest_desc_label = _make_label("")
+	_quest_desc_label.add_theme_font_size_override("font_size", 14)
+	_quest_desc_label.add_theme_color_override("font_color", Color(0.75, 0.85, 0.95, 1.0))
+	quest_vbox.add_child(_quest_desc_label)
+	_refresh_quest_panel()
+
+func _refresh_quest_panel() -> void:
+	if _quest_manager == null:
+		return
+	if not _quest_manager.has_method("get_current_main_quest"):
+		return
+	var main_quest: Dictionary = _quest_manager.get_current_main_quest()
+	if main_quest.is_empty():
+		_quest_title_label.text = "任务全部完成！"
+		_quest_progress_label.text = ""
+		_quest_desc_label.text = ""
+		return
+	var quest_data: Dictionary = main_quest.get("data", {})
+	var quest_name: String = str(quest_data.get("name", "未知任务"))
+	var quest_desc: String = str(quest_data.get("description", ""))
+	var progress: float = float(main_quest.get("progress", 0.0))
+	_quest_title_label.text = quest_name
+	_quest_progress_label.text = "进度：%d%%" % int(progress * 100)
+	_quest_desc_label.text = quest_desc
+
+func _on_main_quest_updated(_quest_id: String, _name: String, _progress: float) -> void:
+	_refresh_quest_panel()
+
+func _on_quest_completed(_quest_id: String, _quest_data: Dictionary) -> void:
+	_refresh_quest_panel()

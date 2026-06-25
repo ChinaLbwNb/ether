@@ -8,11 +8,13 @@ class_name GameRoot
 @export var walls_root_path: NodePath
 @export var production_root_path: NodePath
 @export var research_manager_path: NodePath
+@export var quest_manager_path: NodePath
 @export var tower_scene: PackedScene
 @export var wall_scene: PackedScene
 @export var miner_scene: PackedScene
 @export var generator_scene: PackedScene
 @export var research_station_scene: PackedScene
+@export var rift_portal_scene: PackedScene
 @export var collect_radius: float = 110.0
 @export var build_radius: float = 480.0
 @export var build_grid_size: float = 64.0
@@ -33,6 +35,7 @@ var _towers_root: Node
 var _walls_root: Node
 var _production_root: Node
 var _research_manager: Node
+var _quest_manager: Node
 var _build_mode: String = ""
 var _build_rotation_degrees: float = 0.0
 var _player_attack_cooldown: float = 0.0
@@ -45,6 +48,7 @@ func _ready() -> void:
 	_walls_root = get_node(walls_root_path)
 	_production_root = get_node(production_root_path)
 	_research_manager = get_node_or_null(research_manager_path)
+	_quest_manager = get_node_or_null(quest_manager_path)
 	_base_core.health_changed.connect(game_state.set_base_health)
 	_base_core.destroyed.connect(_on_base_destroyed)
 	game_state.game_finished.connect(_on_game_finished)
@@ -71,6 +75,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_set_build_mode("" if _build_mode == "miner" else "miner")
 	elif event.is_action_pressed("build_research_station"):
 		_set_build_mode("" if _build_mode == "research" else "research")
+	elif event.is_action_pressed("build_rift"):
+		_set_build_mode("" if _build_mode == "rift" else "rift")
 	elif event.is_action_pressed("switch_weapon"):
 		_try_switch_weapon()
 	elif event.is_action_pressed("upgrade_mech"):
@@ -104,6 +110,8 @@ func _set_build_mode(new_mode: String) -> void:
 		game_state.show_message("建造模式：采矿机，必须贴近资源点，R 旋转")
 	elif _build_mode == "research":
 		game_state.show_message("建造模式：研究站，左键放置，K 打开科技面板")
+	elif _build_mode == "rift":
+		game_state.show_message("建造模式：裂隙传送门，左键放置")
 	else:
 		game_state.show_message("已退出建造模式")
 	queue_redraw()
@@ -127,6 +135,8 @@ func _try_place_current_building(world_position: Vector2) -> void:
 		_try_place_miner(world_position)
 	elif _build_mode == "research":
 		_try_place_research_station(world_position)
+	elif _build_mode == "rift":
+		_try_place_rift_portal(world_position)
 	queue_redraw()
 
 func _try_collect_resource() -> void:
@@ -260,6 +270,7 @@ func _try_place_tower(world_position: Vector2) -> void:
 	_towers_root.add_child(tower)
 	_apply_research_to_building(tower)
 	game_state.show_message("哨兵塔已建造")
+	_notify_building_built("sentry_tower")
 
 func _try_place_wall(world_position: Vector2) -> void:
 	if game_state.is_finished:
@@ -283,6 +294,7 @@ func _try_place_wall(world_position: Vector2) -> void:
 	_walls_root.add_child(wall)
 	_apply_research_to_building(wall)
 	game_state.show_message("城墙已建造")
+	_notify_building_built("wall_segment")
 
 func _try_place_generator(world_position: Vector2) -> void:
 	if game_state.is_finished:
@@ -306,6 +318,7 @@ func _try_place_generator(world_position: Vector2) -> void:
 	_production_root.add_child(generator)
 	_apply_research_to_building(generator)
 	game_state.show_message("发电机已建造，电力 +%d" % generator.power_output)
+	_notify_building_built("power_generator")
 
 func _try_place_miner(world_position: Vector2) -> void:
 	if game_state.is_finished:
@@ -334,6 +347,7 @@ func _try_place_miner(world_position: Vector2) -> void:
 	miner.setup_deposit(deposit)
 	_apply_research_to_building(miner)
 	game_state.show_message("采矿机已部署：%s" % _get_resource_label(deposit.resource_id))
+	_notify_building_built("mining_drill")
 
 func _try_place_research_station(world_position: Vector2) -> void:
 	if game_state.is_finished:
@@ -356,10 +370,41 @@ func _try_place_research_station(world_position: Vector2) -> void:
 	_assign_build_metadata(station, costs)
 	_production_root.add_child(station)
 	game_state.show_message("研究站已建造，按 K 打开科技面板")
+	_notify_building_built("research_station")
+
+func _try_place_rift_portal(world_position: Vector2) -> void:
+	if game_state.is_finished:
+		return
+	if rift_portal_scene == null:
+		game_state.show_message("缺少裂隙传送门场景")
+		return
+	var existing_rifts: Array = get_tree().get_nodes_in_group("rift_portal")
+	if not existing_rifts.is_empty():
+		game_state.show_message("裂隙传送门只能建造一座")
+		return
+	var snapped_position := _snap_to_build_grid(world_position)
+	var validation_message := _get_build_validation_message(snapped_position)
+	if not validation_message.is_empty():
+		game_state.show_message(validation_message)
+		return
+	var costs: Dictionary = game_state.get_rift_portal_costs()
+	if not game_state.spend_resources(costs):
+		game_state.show_message("资源不足，需要 %s" % game_state.format_cost(costs))
+		return
+	var rift := rift_portal_scene.instantiate()
+	rift.global_position = snapped_position
+	_assign_build_metadata(rift, costs)
+	_production_root.add_child(rift)
+	game_state.show_message("裂隙传送门已建造，充能中将开启最终防御")
+	_set_build_mode("")
 
 func _assign_build_metadata(building: Node, costs: Dictionary) -> void:
 	building.set_meta("build_costs", costs.duplicate())
 	building.set_meta("build_rotation_degrees", _build_rotation_degrees)
+
+func _notify_building_built(building_type: String) -> void:
+	if _quest_manager != null and _quest_manager.has_method("notify_building_built"):
+		_quest_manager.notify_building_built(building_type)
 
 func _apply_research_to_building(building: Node) -> void:
 	if _research_manager != null and _research_manager.has_method("apply_building_research"):

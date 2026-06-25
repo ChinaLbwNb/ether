@@ -22,6 +22,9 @@ signal game_finished(victory: bool, reason: String)
 @export var mech_upgrade_energy_cost: int = 60
 @export var mech_upgrade_iron_cost: int = 20
 @export var research_station_energy_cost: int = 45
+@export var rift_portal_energy_cost: int = 200
+@export var rift_portal_iron_cost: int = 100
+@export var rift_portal_carbon_cost: int = 80
 
 var resources: Dictionary = {}
 var energy: int = 0
@@ -128,6 +131,9 @@ func get_mech_upgrade_costs() -> Dictionary:
 
 func get_research_station_costs() -> Dictionary:
 	return {"energy": research_station_energy_cost, "iron": 20, "carbon": 10}
+
+func get_rift_portal_costs() -> Dictionary:
+	return {"energy": rift_portal_energy_cost, "iron": rift_portal_iron_cost, "carbon": rift_portal_carbon_cost}
 
 func set_base_health(current_health: int, max_health: int) -> void:
 	base_health_changed.emit(current_health, max_health)

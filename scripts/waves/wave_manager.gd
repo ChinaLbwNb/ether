@@ -1,6 +1,10 @@
 extends Node
 class_name WaveManager
 
+signal final_defense_started
+signal final_defense_won
+signal final_defense_lost
+
 @export var enemy_scene: PackedScene
 @export var game_state_path: NodePath
 @export var base_path: NodePath
@@ -12,6 +16,9 @@ class_name WaveManager
 @export var max_waves_to_win: int = 5
 @export var wave_clear_reward: int = 25
 @export var enemy_type_data_path: String = "res://data/enemies/enemy_types.json"
+@export var auto_start: bool = true
+@export var final_defense_waves: int = 10
+@export var final_defense_difficulty_mult: float = 1.5
 
 var game_state: Node
 var _base_core: Node2D
@@ -19,13 +26,15 @@ var _spawn_root: Node
 var _enemies_root: Node
 var _spawn_points: Array[Node2D] = []
 var _wave: int = 0
-var _state: String = "准备"
+var _state: String = "待机"
 var _countdown: float = 0.0
 var _spawn_cooldown: float = 0.0
 var _remaining_to_spawn: int = 0
 var _enemy_types: Dictionary = {}
 var _spawn_queue: Array[String] = []
 var _next_wave_preview: Dictionary = {}
+var _is_final_defense: bool = false
+var _final_wave_count: int = 0
 
 func _ready() -> void:
 	game_state = get_node(game_state_path)
@@ -36,12 +45,19 @@ func _ready() -> void:
 		if child is Node2D:
 			_spawn_points.append(child)
 	_load_enemy_types()
-	_start_preparation()
+	add_to_group("wave_manager")
+	if auto_start:
+		_start_preparation()
+	else:
+		_state = "待机"
+		_emit_status()
 
 func _process(delta: float) -> void:
 	if game_state != null and game_state.is_finished:
 		return
-	if _state == "准备":
+	if _state == "待机":
+		return
+	elif _state == "准备":
 		_countdown -= delta
 		_emit_status()
 		if _countdown <= 0.0:
@@ -58,15 +74,25 @@ func _process(delta: float) -> void:
 	elif _state == "清场":
 		_emit_status()
 		if _alive_enemy_count() == 0:
-			if _wave >= max_waves_to_win:
-				if game_state != null:
-					game_state.finish_game(true, "守住了测试波次，基地防守原型胜利")
+			if _is_final_defense:
+				if _wave >= _final_wave_count:
+					_on_final_defense_won()
+				else:
+					if game_state != null:
+						var reward: int = wave_clear_reward * 2 + _wave * 15
+						game_state.add_energy(reward)
+						game_state.show_message("最终防御第 %d 波已清除，能量 +%d" % [_wave, reward])
+					_start_preparation()
 			else:
-				if game_state != null:
-					var reward: int = wave_clear_reward + _wave * 10
-					game_state.add_energy(reward)
-					game_state.show_message("第 %d 波已清除，回收能量 +%d" % [_wave, reward])
-				_start_preparation()
+				if _wave >= max_waves_to_win:
+					if game_state != null:
+						game_state.finish_game(true, "守住了测试波次，基地防守原型胜利")
+				else:
+					if game_state != null:
+						var reward: int = wave_clear_reward + _wave * 10
+						game_state.add_energy(reward)
+						game_state.show_message("第 %d 波已清除，回收能量 +%d" % [_wave, reward])
+					_start_preparation()
 
 func _start_preparation() -> void:
 	_state = "准备"
@@ -125,18 +151,21 @@ func _load_enemy_types() -> void:
 			_enemy_types[str(item["id"])] = item
 
 func _build_wave_composition(wave: int) -> Dictionary:
-	var total_count: int = base_enemy_count + (wave - 1) * 2 + _dynamic_pressure_bonus()
+	var mult: float = 1.0
+	if _is_final_defense:
+		mult = final_defense_difficulty_mult
+	var total_count: int = int(float(base_enemy_count + (wave - 1) * 2 + _dynamic_pressure_bonus()) * mult)
 	var composition: Dictionary = {"scout": total_count}
 	if wave >= 2:
-		var armored_count: int = 1 + int(floor(float(wave) / 2.0))
+		var armored_count: int = int(float(1 + int(floor(float(wave) / 2.0))) * mult)
 		composition["armored"] = armored_count
 		composition["scout"] = maxi(int(composition["scout"]) - armored_count, 2)
 	if wave >= 3:
-		composition["breaker"] = 1 + int(floor(float(wave - 3) / 2.0))
+		composition["breaker"] = int(float(1 + int(floor(float(wave - 3) / 2.0))) * mult)
 	if wave >= 4:
-		composition["spitter"] = 1 + int(floor(float(wave - 4) / 2.0))
+		composition["spitter"] = int(float(1 + int(floor(float(wave - 4) / 2.0))) * mult)
 	if wave % 3 == 0:
-		composition["elite"] = 1
+		composition["elite"] = int(mult) + (1 if _is_final_defense and wave >= 5 else 0)
 	return composition
 
 func _dynamic_pressure_bonus() -> int:
@@ -169,3 +198,31 @@ func _format_composition_names(composition: Dictionary) -> String:
 		var type_name: String = str(profile.get("name", type_id))
 		parts.append("%s x%d" % [type_name, int(composition[type_id])])
 	return "、".join(parts)
+
+func start_final_defense() -> void:
+	if _state != "待机":
+		return
+	_is_final_defense = true
+	_wave = 0
+	_final_wave_count = final_defense_waves
+	final_defense_started.emit()
+	if game_state != null:
+		game_state.show_message("警告：裂隙充能即将完成，最终防御战即将开始！")
+	_start_preparation()
+
+func _on_final_defense_won() -> void:
+	final_defense_won.emit()
+	var quest_managers: Array = get_tree().get_nodes_in_group("quest_manager")
+	if not quest_managers.is_empty() and quest_managers[0].has_method("notify_defense_won"):
+		quest_managers[0].notify_defense_won()
+	if game_state != null:
+		game_state.show_message("最终防御胜利！裂隙已稳定，星球正在净化...")
+
+func is_final_defense_active() -> bool:
+	return _is_final_defense
+
+func get_current_wave() -> int:
+	return _wave
+
+func get_final_wave_count() -> int:
+	return _final_wave_count
