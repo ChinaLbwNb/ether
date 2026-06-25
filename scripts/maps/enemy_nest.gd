@@ -89,8 +89,9 @@ func _get_current_wave() -> int:
 	var wave_managers: Array = get_tree().get_nodes_in_group("wave_manager")
 	if wave_managers.is_empty():
 		return 1
-	if wave_managers[0].has("wave"):
-		return max(wave_managers[0].wave, 1)
+	var wm: Node = wave_managers[0]
+	if wm.has_method("get_current_wave"):
+		return max(wm.get_current_wave(), 1)
 	return 1
 
 func take_damage(amount: int) -> void:

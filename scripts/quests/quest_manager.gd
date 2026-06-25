@@ -56,7 +56,7 @@ func _connect_signals() -> void:
 		_research_manager.research_changed.connect(_on_research_changed)
 	if _map_manager != null and _map_manager.has_signal("zone_discovered"):
 		_map_manager.zone_discovered.connect(_on_zone_discovered)
-	var enemies_tree: Node = get_tree()
+	var enemies_tree: SceneTree = get_tree()
 	if enemies_tree != null:
 		enemies_tree.connect("node_added", Callable(self, "_on_node_added"))
 		for nest in enemies_tree.get_nodes_in_group("enemy_nests"):

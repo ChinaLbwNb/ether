@@ -23,7 +23,7 @@ func _ready() -> void:
 	_mask_layer.edge_fade_width = edge_fade_width
 	_mask_layer.player_visible_radius = player_visible_radius
 	var mask_material := CanvasItemMaterial.new()
-	mask_material.blend_mode = CanvasItemMaterial.BLEND_MODE_SUBTRACT
+	mask_material.blend_mode = CanvasItemMaterial.BLEND_MODE_SUB
 	_mask_layer.material = mask_material
 	add_child(_fog_layer)
 	add_child(_mask_layer)
@@ -111,13 +111,11 @@ class FogMask extends Node2D:
 			var inner1: Vector2 = local_pos + Vector2(cos(angle1), sin(angle1)) * inner_radius
 			var outer0: Vector2 = local_pos + Vector2(cos(angle0), sin(angle0)) * radius
 			var outer1: Vector2 = local_pos + Vector2(cos(angle1), sin(angle1)) * radius
-			var tri_points := PackedVector2Array([inner0, inner1, outer1, inner0, outer1, outer0])
-			var tri_colors := PackedColorArray([
-				sub_color,
-				sub_color,
-				Color(0, 0, 0, 0),
-				sub_color,
-				Color(0, 0, 0, 0),
-				Color(0, 0, 0, 0)
-			])
-			draw_primitive(tri_points, tri_colors, PackedVector2Array())
+			# Triangle 1: inner0, inner1, outer1
+			var tri1_points := PackedVector2Array([inner0, inner1, outer1])
+			var tri1_colors := PackedColorArray([sub_color, sub_color, Color(0, 0, 0, 0)])
+			draw_primitive(tri1_points, tri1_colors, PackedVector2Array())
+			# Triangle 2: inner0, outer1, outer0
+			var tri2_points := PackedVector2Array([inner0, outer1, outer0])
+			var tri2_colors := PackedColorArray([sub_color, Color(0, 0, 0, 0), Color(0, 0, 0, 0)])
+			draw_primitive(tri2_points, tri2_colors, PackedVector2Array())
