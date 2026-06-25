@@ -6,6 +6,7 @@ class_name GameHud
 @export var research_manager_path: NodePath
 @export var map_manager_path: NodePath
 @export var mission_manager_path: NodePath
+@export var mode_manager_path: NodePath
 
 var _energy_label: Label
 var _iron_label: Label
@@ -17,6 +18,7 @@ var _mech_shield_label: Label
 var _mech_energy_label: Label
 var _weapon_label: Label
 var _map_label: Label
+var _mode_label: Label
 var _mission_label: Label
 var _base_label: Label
 var _wave_label: Label
@@ -29,6 +31,7 @@ var _research_list: VBoxContainer
 var _research_manager: Node
 var _map_manager: Node
 var _mission_manager: Node
+var _mode_manager: Node
 
 func _ready() -> void:
 	var root := VBoxContainer.new()
@@ -46,6 +49,7 @@ func _ready() -> void:
 	_mech_energy_label = _make_label("机甲能量：--")
 	_weapon_label = _make_label("武器：电磁步枪 Lv.1")
 	_map_label = _make_label("区域：主基地")
+	_mode_label = _make_label("模式：战役")
 	_mission_label = _make_label("任务：初始化")
 	_base_label = _make_label("基地：--")
 	_wave_label = _make_label("波次：准备")
@@ -65,6 +69,7 @@ func _ready() -> void:
 	root.add_child(_mech_energy_label)
 	root.add_child(_weapon_label)
 	root.add_child(_map_label)
+	root.add_child(_mode_label)
 	root.add_child(_mission_label)
 	root.add_child(_research_label)
 	root.add_child(_base_label)
@@ -95,6 +100,10 @@ func _ready() -> void:
 	_mission_manager = get_node_or_null(mission_manager_path)
 	if _mission_manager != null:
 		_mission_manager.mission_changed.connect(_on_mission_changed)
+	_mode_manager = get_node_or_null(mode_manager_path)
+	if _mode_manager != null:
+		_mode_manager.mode_changed.connect(_on_mode_changed)
+		_mode_manager.survival_stats_changed.connect(_on_survival_stats_changed)
 	_build_research_panel()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -205,6 +214,14 @@ func _on_map_changed(_map_id: String, _map_name: String, _biome: String) -> void
 
 func _on_mission_changed(title: String, objective_text: String, progress_text: String) -> void:
 	_mission_label.text = "%s  %s：%s" % [progress_text, title, objective_text]
+
+func _on_mode_changed(_mode_id: String, _mode_name: String) -> void:
+	if _mode_manager != null:
+		_mode_label.text = _mode_manager.get_mode_status_text()
+
+func _on_survival_stats_changed(_elapsed_seconds: int, _highest_wave: int, _cleared_waves: int) -> void:
+	if _mode_manager != null:
+		_mode_label.text = _mode_manager.get_mode_status_text()
 
 func _on_base_health_changed(current_health: int, max_health: int) -> void:
 	_base_label.text = "基地：%d / %d" % [current_health, max_health]

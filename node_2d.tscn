@@ -22,6 +22,7 @@
 [ext_resource type="PackedScene" path="res://scenes/buildings/research_station.tscn" id="19_research_station"]
 [ext_resource type="Script" path="res://scripts/maps/map_manager.gd" id="20_map_manager"]
 [ext_resource type="Script" path="res://scripts/missions/mission_manager.gd" id="21_mission_manager"]
+[ext_resource type="Script" path="res://scripts/modes/game_mode_manager.gd" id="22_mode_manager"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_0hol4"]
 atlas = ExtResource("2_epypp")
@@ -401,6 +402,10 @@ game_state_path = NodePath("../GameState")
 research_manager_path = NodePath("../ResearchManager")
 map_manager_path = NodePath("../MapManager")
 
+[node name="GameModeManager" type="Node" parent="."]
+script = ExtResource("22_mode_manager")
+game_state_path = NodePath("../GameState")
+
 [node name="GameRoot" type="Node2D" parent="."]
 script = ExtResource("4_root")
 game_state_path = NodePath("../GameState")
@@ -472,6 +477,7 @@ script = ExtResource("7_wave")
 enemy_scene = ExtResource("10_enemy")
 game_state_path = NodePath("../GameState")
 map_manager_path = NodePath("../MapManager")
+mode_manager_path = NodePath("../GameModeManager")
 base_path = NodePath("../BaseCore")
 spawn_root_path = NodePath("../EnemySpawns")
 enemies_root_path = NodePath("../Enemies")
@@ -483,3 +489,4 @@ player_path = NodePath("../CharacterBody2D")
 research_manager_path = NodePath("../ResearchManager")
 map_manager_path = NodePath("../MapManager")
 mission_manager_path = NodePath("../MissionManager")
+mode_manager_path = NodePath("../GameModeManager")

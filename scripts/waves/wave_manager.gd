@@ -4,6 +4,7 @@ class_name WaveManager
 @export var enemy_scene: PackedScene
 @export var game_state_path: NodePath
 @export var map_manager_path: NodePath
+@export var mode_manager_path: NodePath
 @export var base_path: NodePath
 @export var spawn_root_path: NodePath
 @export var enemies_root_path: NodePath
@@ -16,6 +17,7 @@ class_name WaveManager
 
 var game_state: Node
 var map_manager: Node
+var mode_manager: Node
 var _base_core: Node2D
 var _spawn_root: Node
 var _enemies_root: Node
@@ -32,6 +34,7 @@ var _next_wave_preview: Dictionary = {}
 func _ready() -> void:
 	game_state = get_node(game_state_path)
 	map_manager = get_node_or_null(map_manager_path)
+	mode_manager = get_node_or_null(mode_manager_path)
 	_base_core = get_node(base_path)
 	_spawn_root = get_node(spawn_root_path)
 	_enemies_root = get_node(enemies_root_path)
@@ -54,17 +57,19 @@ func _process(delta: float) -> void:
 		if _remaining_to_spawn > 0 and _spawn_cooldown <= 0.0:
 			_spawn_enemy()
 			_remaining_to_spawn -= 1
-			_spawn_cooldown = spawn_interval
+			_spawn_cooldown = _get_current_spawn_interval()
 		if _remaining_to_spawn == 0:
 			_state = "清场"
 		_emit_status()
 	elif _state == "清场":
 		_emit_status()
 		if _alive_enemy_count() == 0:
-			if _wave >= max_waves_to_win:
+			if _wave >= max_waves_to_win and not _is_survival_mode():
 				if game_state != null:
 					game_state.finish_game(true, "守住了测试波次，基地防守原型胜利")
 			else:
+				if _is_survival_mode() and mode_manager.has_method("notify_wave_cleared"):
+					mode_manager.notify_wave_cleared(_wave)
 				if game_state != null:
 					var reward: int = wave_clear_reward + _wave * 10
 					game_state.add_energy(reward)
@@ -93,6 +98,8 @@ func _start_wave() -> void:
 	if game_state != null:
 		game_state.set_wave_warning(_format_wave_warning(_wave, composition))
 		game_state.show_message("第 %d 波敌人来袭：%s" % [_wave, _format_composition_names(composition)])
+	if _is_survival_mode() and mode_manager.has_method("notify_wave_started"):
+		mode_manager.notify_wave_started(_wave)
 	_emit_status()
 
 func _spawn_enemy() -> void:
@@ -128,7 +135,7 @@ func _load_enemy_types() -> void:
 			_enemy_types[str(item["id"])] = item
 
 func _build_wave_composition(wave: int) -> Dictionary:
-	var total_count: int = base_enemy_count + (wave - 1) * 2 + _dynamic_pressure_bonus()
+	var total_count: int = base_enemy_count + (wave - 1) * 2 + _dynamic_pressure_bonus() + _survival_enemy_bonus(wave)
 	var composition: Dictionary = {"scout": total_count}
 	if wave >= 2:
 		var armored_count: int = 1 + int(floor(float(wave) / 2.0))
@@ -140,6 +147,8 @@ func _build_wave_composition(wave: int) -> Dictionary:
 		composition["spitter"] = 1 + int(floor(float(wave - 4) / 2.0))
 	if wave % 3 == 0:
 		composition["elite"] = 1
+	if _is_survival_mode() and wave >= 6:
+		composition["elite"] = int(composition.get("elite", 0)) + int(floor(float(wave) / 6.0))
 	return composition
 
 func _dynamic_pressure_bonus() -> int:
@@ -160,6 +169,19 @@ func _build_spawn_queue(composition: Dictionary) -> Array[String]:
 			queue.append(str(type_id))
 	queue.shuffle()
 	return queue
+
+func _get_current_spawn_interval() -> float:
+	if mode_manager != null and mode_manager.has_method("get_survival_spawn_interval"):
+		return mode_manager.get_survival_spawn_interval(spawn_interval, _wave)
+	return spawn_interval
+
+func _survival_enemy_bonus(wave: int) -> int:
+	if mode_manager != null and mode_manager.has_method("get_survival_enemy_bonus"):
+		return mode_manager.get_survival_enemy_bonus(wave)
+	return 0
+
+func _is_survival_mode() -> bool:
+	return mode_manager != null and mode_manager.has_method("is_survival_mode") and mode_manager.is_survival_mode()
 
 func _format_wave_warning(wave: int, composition: Dictionary) -> String:
 	var direction_text: String = "东侧与南侧"
