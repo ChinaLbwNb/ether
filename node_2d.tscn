@@ -27,6 +27,7 @@
 [ext_resource type="PackedScene" path="res://scenes/maps/destructible_obstacle.tscn" id="24_obstacle"]
 [ext_resource type="Script" path="res://scripts/quests/quest_manager.gd" id="25_quest_manager"]
 [ext_resource type="PackedScene" path="res://scenes/buildings/rift_portal.tscn" id="26_rift_portal"]
+[ext_resource type="Script" path="res://scripts/waves/survival_mode_manager.gd" id="27_survival_manager"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_0hol4"]
 atlas = ExtResource("2_epypp")
@@ -658,6 +659,12 @@ spawn_root_path = NodePath("../EnemySpawns")
 enemies_root_path = NodePath("../Enemies")
 auto_start = false
 
+[node name="SurvivalModeManager" type="Node" parent="."]
+script = ExtResource("27_survival_manager")
+game_state_path = NodePath("../GameState")
+wave_manager_path = NodePath("../WaveManager")
+auto_start = false
+
 [node name="FogOfWar" type="Node2D" parent="."]
 script = ExtResource("21_fog")
 player_path = NodePath("../CharacterBody2D")
@@ -670,3 +677,4 @@ player_path = NodePath("../CharacterBody2D")
 research_manager_path = NodePath("../ResearchManager")
 map_manager_path = NodePath("../MapManager")
 quest_manager_path = NodePath("../QuestManager")
+survival_manager_path = NodePath("../SurvivalModeManager")

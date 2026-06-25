@@ -4,6 +4,8 @@ class_name WaveManager
 signal final_defense_started
 signal final_defense_won
 signal final_defense_lost
+signal wave_cleared(wave: int)
+signal wave_started(wave: int)
 
 @export var enemy_scene: PackedScene
 @export var game_state_path: NodePath
@@ -35,6 +37,9 @@ var _spawn_queue: Array[String] = []
 var _next_wave_preview: Dictionary = {}
 var _is_final_defense: bool = false
 var _final_wave_count: int = 0
+var _is_survival_mode: bool = false
+var _survival_custom_composition: Dictionary = {}
+var _survival_prepare_time: float = 8.0
 
 func _ready() -> void:
 	game_state = get_node(game_state_path)
@@ -74,7 +79,10 @@ func _process(delta: float) -> void:
 	elif _state == "清场":
 		_emit_status()
 		if _alive_enemy_count() == 0:
-			if _is_final_defense:
+			wave_cleared.emit(_wave)
+			if _is_survival_mode:
+				_on_survival_wave_cleared()
+			elif _is_final_defense:
 				if _wave >= _final_wave_count:
 					_on_final_defense_won()
 				else:
@@ -116,6 +124,7 @@ func _start_wave() -> void:
 	if game_state != null:
 		game_state.set_wave_warning(_format_wave_warning(_wave, composition))
 		game_state.show_message("第 %d 波敌人来袭：%s" % [_wave, _format_composition_names(composition)])
+	wave_started.emit(_wave)
 	_emit_status()
 
 func _spawn_enemy() -> void:
@@ -226,3 +235,33 @@ func get_current_wave() -> int:
 
 func get_final_wave_count() -> int:
 	return _final_wave_count
+
+func start_survival_wave(wave_number: int, composition: Dictionary, prepare_time: float) -> void:
+	if _state != "待机" and _state != "清场":
+		return
+	_is_survival_mode = true
+	_wave = wave_number - 1
+	_survival_custom_composition = composition.duplicate()
+	_survival_prepare_time = prepare_time
+	_state = "准备"
+	_countdown = prepare_time
+	_next_wave_preview = composition.duplicate()
+	_emit_status()
+	if game_state != null:
+		var warning: String = _format_wave_warning(wave_number, composition)
+		game_state.set_wave_warning(warning)
+
+func is_survival_mode() -> bool:
+	return _is_survival_mode
+
+func stop_survival_mode() -> void:
+	_is_survival_mode = false
+	_state = "待机"
+	_emit_status()
+
+func _on_survival_wave_cleared() -> void:
+	if game_state != null:
+		var reward: int = 30 + _wave * 15
+		game_state.add_energy(reward)
+	_state = "待机"
+	_emit_status()

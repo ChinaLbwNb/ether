@@ -6,6 +6,7 @@ class_name GameHud
 @export var research_manager_path: NodePath
 @export var map_manager_path: NodePath
 @export var quest_manager_path: NodePath
+@export var survival_manager_path: NodePath
 
 var _energy_label: Label
 var _iron_label: Label
@@ -31,6 +32,11 @@ var _quest_title_label: Label
 var _quest_progress_label: Label
 var _quest_desc_label: Label
 var _quest_manager: Node
+var _survival_panel: PanelContainer
+var _survival_wave_label: Label
+var _survival_time_label: Label
+var _survival_kills_label: Label
+var _survival_manager: Node
 
 func _ready() -> void:
 	var root := VBoxContainer.new()
@@ -98,8 +104,15 @@ func _ready() -> void:
 			_quest_manager.main_quest_updated.connect(_on_main_quest_updated)
 		if _quest_manager.has_signal("quest_completed"):
 			_quest_manager.quest_completed.connect(_on_quest_completed)
+	_survival_manager = get_node_or_null(survival_manager_path)
+	if _survival_manager != null:
+		if _survival_manager.has_signal("survival_started"):
+			_survival_manager.survival_started.connect(_on_survival_started)
+		if _survival_manager.has_signal("stats_updated"):
+			_survival_manager.stats_updated.connect(_on_survival_stats_updated)
 	_build_research_panel()
 	_build_quest_panel()
+	_build_survival_panel()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_research"):
@@ -273,3 +286,57 @@ func _on_main_quest_updated(_quest_id: String, _name: String, _progress: float) 
 
 func _on_quest_completed(_quest_id: String, _quest_data: Dictionary) -> void:
 	_refresh_quest_panel()
+
+func _build_survival_panel() -> void:
+	_survival_panel = PanelContainer.new()
+	var panel_style: StyleBoxFlat = StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.05, 0.08, 0.12, 0.85)
+	panel_style.border_color = Color(0.6, 0.85, 1.0, 0.4)
+	panel_style.border_width_left = 2
+	panel_style.border_width_right = 2
+	panel_style.border_width_top = 2
+	panel_style.border_width_bottom = 2
+	panel_style.corner_radius_top_left = 8
+	panel_style.corner_radius_top_right = 8
+	panel_style.corner_radius_bottom_left = 8
+	panel_style.corner_radius_bottom_right = 8
+	_survival_panel.add_theme_stylebox_override("panel", panel_style)
+	var survival_margin: MarginContainer = MarginContainer.new()
+	survival_margin.add_theme_constant_override("margin_left", 14)
+	survival_margin.add_theme_constant_override("margin_right", 14)
+	survival_margin.add_theme_constant_override("margin_top", 10)
+	survival_margin.add_theme_constant_override("margin_bottom", 10)
+	_survival_panel.add_child(survival_margin)
+	var survival_vbox: VBoxContainer = VBoxContainer.new()
+	survival_vbox.add_theme_constant_override("separation", 4)
+	survival_margin.add_child(survival_vbox)
+	var title_label: Label = _make_label("⚔ 生存模式")
+	title_label.add_theme_font_size_override("font_size", 18)
+	title_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.5, 1.0))
+	survival_vbox.add_child(title_label)
+	_survival_wave_label = _make_label("波次：0")
+	_survival_wave_label.add_theme_font_size_override("font_size", 15)
+	survival_vbox.add_child(_survival_wave_label)
+	_survival_time_label = _make_label("时间：00:00")
+	_survival_time_label.add_theme_font_size_override("font_size", 15)
+	survival_vbox.add_child(_survival_time_label)
+	_survival_kills_label = _make_label("击杀：0")
+	_survival_kills_label.add_theme_font_size_override("font_size", 15)
+	survival_vbox.add_child(_survival_kills_label)
+	_survival_panel.position = Vector2(18, 380)
+	_survival_panel.visible = false
+	add_child(_survival_panel)
+
+func _on_survival_started() -> void:
+	if _survival_panel != null:
+		_survival_panel.visible = true
+	if _quest_panel != null:
+		_quest_panel.visible = false
+
+func _on_survival_stats_updated(wave: int, time: float, kills: int) -> void:
+	if _survival_wave_label != null:
+		_survival_wave_label.text = "波次：%d" % wave
+	if _survival_time_label != null and _survival_manager != null and _survival_manager.has_method("format_time"):
+		_survival_time_label.text = "时间：%s" % _survival_manager.format_time(time)
+	if _survival_kills_label != null:
+		_survival_kills_label.text = "击杀：%d" % kills
