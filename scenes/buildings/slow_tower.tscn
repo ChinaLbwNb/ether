@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/buildings/slow_tower.gd" id="1_slow"]
+[ext_resource type="Texture2D" path="res://art/gameplay/towers/slow_tower.png" id="2_slow_texture"]
 
 [node name="SlowTower" type="Node2D"]
 script = ExtResource("1_slow")
+asset_texture = ExtResource("2_slow_texture")

@@ -37,8 +37,11 @@ func _ready() -> void:
 func setup(target_base) -> void:
 	base_core = target_base
 
-func setup_type(profile: Dictionary, wave: int = 1, strength_mult: float = 1.0) -> void:
-	enemy_type_id = str(profile.get("id", enemy_type_id))
+func setup_type(profile: Dictionary, wave: int = 1, strength_mult: float = 1.0, type_id: String = "") -> void:
+	if type_id != "":
+		enemy_type_id = type_id
+	else:
+		enemy_type_id = str(profile.get("id", enemy_type_id))
 	display_name = str(profile.get("name", display_name))
 	role = str(profile.get("role", role))
 	var base_health: int = int(profile.get("health", max_health)) + max(wave - 1, 0) * int(profile.get("health_growth", 6))
@@ -53,6 +56,8 @@ func setup_type(profile: Dictionary, wave: int = 1, strength_mult: float = 1.0) 
 	tint_color = Color.html(str(profile.get("color", "#ef5b52")))
 	max_shield = int(float(int(profile.get("shield", 0))) * strength_mult)
 	shield = max_shield
+	if profile.has("texture"):
+		asset_texture = load(profile.texture)
 	_base_speed = move_speed
 	health = max_health
 	queue_redraw()

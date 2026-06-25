@@ -7,6 +7,7 @@ class_name SlowTower
 @export var slow_duration: float = 0.25
 @export var max_health: int = 130
 @export var max_level: int = 3
+@export var asset_texture: Texture2D
 @export var visual_size: Vector2 = Vector2(78, 78)
 
 var health: int
@@ -96,9 +97,12 @@ func apply_research_bonus(tech_id: String) -> void:
 
 func _draw() -> void:
 	var health_ratio := float(health) / float(max_health)
-	draw_circle(Vector2.ZERO, 36.0, Color(0.05, 0.08, 0.15, 0.95))
-	draw_circle(Vector2.ZERO, 26.0, Color(0.2, 0.4, 0.85, 0.9))
-	draw_circle(Vector2.ZERO, 16.0, Color(0.4, 0.7, 1.0, 0.8))
+	if asset_texture != null:
+		draw_texture_rect(asset_texture, Rect2(-visual_size * 0.5, visual_size), false)
+	else:
+		draw_circle(Vector2.ZERO, 36.0, Color(0.05, 0.08, 0.15, 0.95))
+		draw_circle(Vector2.ZERO, 26.0, Color(0.2, 0.4, 0.85, 0.9))
+		draw_circle(Vector2.ZERO, 16.0, Color(0.4, 0.7, 1.0, 0.8))
 	var pulse_radius := attack_range * (0.85 + 0.15 * sin(_pulse_phase))
 	var pulse_alpha := 0.12 + 0.08 * sin(_pulse_phase)
 	draw_arc(Vector2.ZERO, pulse_radius, 0.0, TAU, 96, Color(0.3, 0.6, 1.0, pulse_alpha), 3.0)

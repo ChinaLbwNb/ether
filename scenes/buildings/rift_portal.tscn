@@ -1,9 +1,11 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/buildings/rift_portal.gd" id="1_rift"]
+[ext_resource type="Texture2D" path="res://art/gameplay/production/rift_portal.png" id="2_rift_texture"]
 
 [node name="RiftPortal" type="Node2D"]
 script = ExtResource("1_rift")
+asset_texture = ExtResource("2_rift_texture")
 max_health = 500
 max_charge = 100.0
 charge_per_second = 2.0

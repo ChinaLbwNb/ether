@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/buildings/laser_tower.gd" id="1_laser"]
+[ext_resource type="Texture2D" path="res://art/gameplay/towers/laser_tower.png" id="2_laser_texture"]
 
 [node name="LaserTower" type="Node2D"]
 script = ExtResource("1_laser")
+asset_texture = ExtResource("2_laser_texture")

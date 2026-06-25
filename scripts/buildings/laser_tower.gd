@@ -5,6 +5,7 @@ class_name LaserTower
 @export var damage_per_second: int = 25
 @export var max_health: int = 140
 @export var max_level: int = 3
+@export var asset_texture: Texture2D
 @export var visual_size: Vector2 = Vector2(80, 80)
 
 var _target: Node2D = null
@@ -107,14 +108,16 @@ func apply_research_bonus(tech_id: String) -> void:
 
 func _draw() -> void:
 	var health_ratio := float(health) / float(max_health)
-	draw_circle(Vector2.ZERO, 38.0, Color(0.08, 0.05, 0.12, 0.95))
-	draw_circle(Vector2.ZERO, 28.0, Color(0.5, 0.2, 0.85, 0.9))
-	draw_circle(Vector2.ZERO, 18.0, Color(0.8, 0.4, 1.0, 0.8))
+	if asset_texture != null:
+		draw_texture_rect(asset_texture, Rect2(-visual_size * 0.5, visual_size), false)
+	else:
+		draw_circle(Vector2.ZERO, 38.0, Color(0.08, 0.05, 0.12, 0.95))
+		draw_circle(Vector2.ZERO, 28.0, Color(0.5, 0.2, 0.85, 0.9))
+		draw_circle(Vector2.ZERO, 18.0, Color(0.8, 0.4, 1.0, 0.8))
 	if _target != null and is_instance_valid(_target) and _laser_beam_alpha > 0.0:
-		var target_dir := global_position.direction_to(_target.global_position)
+		var local_target := (_target.global_position - global_position)
 		var beam_color := Color(0.9, 0.4, 1.0, _laser_beam_alpha)
 		var glow_color := Color(0.7, 0.2, 0.9, _laser_beam_alpha * 0.4)
-		var local_target := (_target.global_position - global_position)
 		draw_line(Vector2.ZERO, local_target, glow_color, 10.0)
 		draw_line(Vector2.ZERO, local_target, beam_color, 4.0)
 	draw_arc(Vector2.ZERO, attack_range, 0.0, TAU, 96, Color(0.7, 0.3, 1.0, 0.12), 2.0)

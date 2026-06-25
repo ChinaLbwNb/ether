@@ -144,7 +144,7 @@ func _spawn_enemy() -> void:
 	_enemies_root.add_child(enemy)
 	var type_id: String = _spawn_queue.pop_front()
 	if enemy.has_method("setup_type") and _enemy_types.has(type_id):
-		enemy.setup_type(_enemy_types[type_id], _wave, _enemy_strength_multiplier)
+		enemy.setup_type(_enemy_types[type_id], _wave, _enemy_strength_multiplier, type_id)
 	enemy.setup(_base_core)
 
 func _alive_enemy_count() -> int:

@@ -11,6 +11,7 @@
     "armor": 0,
     "target_priority": "nearest",
     "color": "#ef5b52",
+    "texture": "res://art/gameplay/enemies/enemy_scout.png",
     "health_growth": 5
   },
   {
@@ -25,6 +26,7 @@
     "armor": 4,
     "target_priority": "nearest",
     "color": "#b86b3d",
+    "texture": "res://art/gameplay/enemies/enemy_armored.png",
     "health_growth": 10
   },
   {
@@ -39,6 +41,7 @@
     "armor": 2,
     "target_priority": "buildings",
     "color": "#f2b84b",
+    "texture": "res://art/gameplay/enemies/enemy_breaker.png",
     "health_growth": 8
   },
   {
@@ -53,6 +56,7 @@
     "armor": 1,
     "target_priority": "nearest",
     "color": "#73d66f",
+    "texture": "res://art/gameplay/enemies/enemy_spitter.png",
     "health_growth": 6
   },
   {
@@ -67,6 +71,7 @@
     "armor": 6,
     "target_priority": "core",
     "color": "#b76cff",
+    "texture": "res://art/gameplay/enemies/enemy_elite.png",
     "health_growth": 18
   },
   {
@@ -80,6 +85,7 @@
     "armor": 0,
     "target_priority": "nearest",
     "color": "#9acd32",
+    "texture": "res://art/gameplay/enemies/enemy_swarm.png",
     "health_growth": 2
   },
   {
@@ -93,6 +99,7 @@
     "shield": 55,
     "target_priority": "nearest",
     "color": "#4169e1",
+    "texture": "res://art/gameplay/enemies/enemy_shielded.png",
     "health_growth": 8
   },
   {
@@ -107,6 +114,7 @@
     "armor": 10,
     "target_priority": "nearest",
     "color": "#8b4513",
+    "texture": "res://art/gameplay/enemies/enemy_brute.png",
     "health_growth": 20
   }
 ]

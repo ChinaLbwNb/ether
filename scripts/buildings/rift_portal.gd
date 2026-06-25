@@ -9,6 +9,7 @@ signal fully_charged
 @export var charge_per_second: float = 2.0
 @export var power_drain: int = 10
 @export var defense_start_charge_percent: float = 30.0
+@export var asset_texture: Texture2D
 @export var visual_size: Vector2 = Vector2(120, 140)
 @export var portal_color: Color = Color(0.4, 0.2, 0.9, 0.95)
 
@@ -122,27 +123,33 @@ func _draw() -> void:
 	var health_ratio: float = float(health) / float(max_health)
 	var charge_ratio: float = current_charge / max_charge
 	var base_radius: float = visual_size.x * 0.45
-	var portal_height: float = visual_size.y * 0.5
-	draw_circle(Vector2(0, portal_height * 0.15), base_radius * 0.9, Color(0.05, 0.03, 0.12, 0.9))
-	draw_arc(Vector2(0, portal_height * 0.15), base_radius, 0.0, PI, 48, Color(portal_color.r, portal_color.g, portal_color.b, 0.8), 4.0)
-	var inner_radius: float = base_radius * 0.75
-	var charge_color: Color = Color(
-		portal_color.r * 0.8,
-		portal_color.g * 0.6,
-		portal_color.b,
-		0.6 + charge_ratio * 0.35
-	)
-	for i in range(3):
-		var offset: float = sin(_pulse_phase + float(i) * 2.0) * 4.0
-		var ring_radius: float = inner_radius * (0.5 + float(i) * 0.2 + charge_ratio * 0.1)
-		draw_arc(Vector2(0, portal_height * 0.15 + offset), ring_radius, 0.0, PI, 36, charge_color, 2.5 + float(i) * 0.5)
-	if charge_ratio > 0:
-		var fill_radius: float = inner_radius * 0.6 * charge_ratio
-		draw_circle(Vector2(0, portal_height * 0.15), fill_radius, Color(portal_color.r, portal_color.g, portal_color.b, 0.5 + charge_ratio * 0.4))
-	var leg_color: Color = Color(0.3, 0.25, 0.35, 0.9)
-	draw_rect(Rect2(Vector2(-base_radius * 0.9, portal_height * 0.4), Vector2(base_radius * 0.25, portal_height * 0.5)), leg_color)
-	draw_rect(Rect2(Vector2(base_radius * 0.65, portal_height * 0.4), Vector2(base_radius * 0.25, portal_height * 0.5)), leg_color)
-	draw_rect(Rect2(Vector2(-base_radius, portal_height * 0.85), Vector2(base_radius * 2, 14)), Color(0.25, 0.2, 0.3, 0.95))
+	if asset_texture != null:
+		draw_texture_rect(asset_texture, Rect2(-visual_size * 0.5, visual_size), false)
+	else:
+		var portal_height: float = visual_size.y * 0.5
+		draw_circle(Vector2(0, portal_height * 0.15), base_radius * 0.9, Color(0.05, 0.03, 0.12, 0.9))
+		draw_arc(Vector2(0, portal_height * 0.15), base_radius, 0.0, PI, 48, Color(portal_color.r, portal_color.g, portal_color.b, 0.8), 4.0)
+		var inner_radius: float = base_radius * 0.75
+		var charge_color: Color = Color(
+			portal_color.r * 0.8,
+			portal_color.g * 0.6,
+			portal_color.b,
+			0.6 + charge_ratio * 0.35
+		)
+		for i in range(3):
+			var offset: float = sin(_pulse_phase + float(i) * 2.0) * 4.0
+			var ring_radius: float = inner_radius * (0.5 + float(i) * 0.2 + charge_ratio * 0.1)
+			draw_arc(Vector2(0, portal_height * 0.15 + offset), ring_radius, 0.0, PI, 36, charge_color, 2.5 + float(i) * 0.5)
+		if charge_ratio > 0:
+			var fill_radius: float = inner_radius * 0.6 * charge_ratio
+			draw_circle(Vector2(0, portal_height * 0.15), fill_radius, Color(portal_color.r, portal_color.g, portal_color.b, 0.5 + charge_ratio * 0.4))
+		var leg_color: Color = Color(0.3, 0.25, 0.35, 0.9)
+		draw_rect(Rect2(Vector2(-base_radius * 0.9, portal_height * 0.4), Vector2(base_radius * 0.25, portal_height * 0.5)), leg_color)
+		draw_rect(Rect2(Vector2(base_radius * 0.65, portal_height * 0.4), Vector2(base_radius * 0.25, portal_height * 0.5)), leg_color)
+		draw_rect(Rect2(Vector2(-base_radius, portal_height * 0.85), Vector2(base_radius * 2, 14)), Color(0.25, 0.2, 0.3, 0.95))
+	if charge_ratio > 0 and asset_texture != null:
+		var pulse_size: float = base_radius * 0.8 * (0.9 + 0.1 * sin(_pulse_phase))
+		draw_circle(Vector2.ZERO, pulse_size, Color(portal_color.r, portal_color.g, portal_color.b, 0.2 + charge_ratio * 0.2))
 	if health_ratio < 1.0:
 		draw_rect(Rect2(Vector2(-base_radius, -visual_size.y * 0.55), Vector2(base_radius * 2, 7)), Color(0.08, 0.02, 0.02, 0.85))
 		draw_rect(Rect2(Vector2(-base_radius, -visual_size.y * 0.55), Vector2(base_radius * 2 * health_ratio, 7)), Color(0.95, 0.2, 0.3, 0.95))
