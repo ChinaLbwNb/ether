@@ -24,6 +24,9 @@ func _ready() -> void:
 	_grid_width = int(ceil(map_half_extents.x * 2.0 / cell_size)) + 1
 	_grid_height = int(ceil(map_half_extents.y * 2.0 / cell_size)) + 1
 	_build_grid()
+	call_deferred("_deferred_rebuild")
+
+func _deferred_rebuild() -> void:
 	rebuild_obstacles()
 
 func _process(delta: float) -> void:
@@ -135,13 +138,13 @@ func rebuild_obstacles() -> void:
 		if building.has_method("get_block_radius"):
 			block_radius = building.get_block_radius()
 		elif building.is_in_group("base_core"):
-			block_radius = cell_size * 0.75
+			block_radius = cell_size * 0.4
 		elif building.is_in_group("defense_towers"):
 			block_radius = cell_size * 0.5
 		elif building.is_in_group("rift_portal"):
 			block_radius = cell_size * 0.8
-		elif WallSegment != null and building is WallSegment:
-			block_radius = cell_size * 0.3
+		elif building is WallSegment:
+			block_radius = cell_size * 0.45
 		elif building.is_in_group("enemy_nests"):
 			block_radius = cell_size * 0.6
 		elif building.is_in_group("destructible_obstacles"):
@@ -252,9 +255,23 @@ func is_position_walkable(world_pos: Vector2) -> bool:
 func register_building(building: Node2D) -> void:
 	if building == null or not is_instance_valid(building):
 		return
-	var block_radius: float = cell_size * 0.6
+	var block_radius: float = cell_size * 0.5
 	if building.has_method("get_block_radius"):
 		block_radius = building.get_block_radius()
+	elif building.is_in_group("base_core"):
+		block_radius = cell_size * 0.4
+	elif building.is_in_group("defense_towers"):
+		block_radius = cell_size * 0.5
+	elif building.is_in_group("rift_portal"):
+		block_radius = cell_size * 0.8
+	elif building is WallSegment:
+		block_radius = cell_size * 0.45
+	elif building.is_in_group("enemy_nests"):
+		block_radius = cell_size * 0.6
+	elif building.is_in_group("destructible_obstacles"):
+		block_radius = cell_size * 0.5
+	elif building.is_in_group("repairable_buildings"):
+		block_radius = cell_size * 0.55
 	add_circular_obstacle(building.global_position, block_radius)
 
 func unregister_building(building: Node2D) -> void:

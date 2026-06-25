@@ -152,8 +152,16 @@ func _spawn_enemy() -> void:
 		enemy.setup_type(_enemy_types[type_id], _wave, _enemy_strength_multiplier, type_id)
 	enemy.setup(_base_core)
 
+func _get_nav_manager() -> Node:
+	if _nav_manager == null:
+		var nav_managers: Array = get_tree().get_nodes_in_group("navigation_manager")
+		if not nav_managers.is_empty():
+			_nav_manager = nav_managers[0]
+	return _nav_manager
+
 func _get_spawn_position() -> Vector2:
-	if _nav_manager != null and _nav_manager.has_method("find_nearest_spawn_position"):
+	var nav: Node = _get_nav_manager()
+	if nav != null and nav.has_method("find_nearest_spawn_position"):
 		_spawn_angle_offset += randf_range(0.3, 0.8)
 		if _spawn_angle_offset >= TAU:
 			_spawn_angle_offset -= TAU
@@ -163,11 +171,11 @@ func _get_spawn_position() -> Vector2:
 			var chosen_point_idx: int = (_remaining_to_spawn + _wave * 3) % _spawn_points.size()
 			var point_to_base: Vector2 = _base_core.global_position.direction_to(_spawn_points[chosen_point_idx].global_position)
 			base_angle = point_to_base.angle() + randf_range(-0.8, 0.8)
-		var spawn_pos: Vector2 = _nav_manager.find_nearest_spawn_position(_base_core.global_position, min_spawn_dist)
+		var spawn_pos: Vector2 = nav.find_nearest_spawn_position(_base_core.global_position, min_spawn_dist)
 		var angle_offset: float = base_angle + randf_range(-0.5, 0.5)
 		var dist_offset: float = randf_range(-64, 64)
 		var candidate: Vector2 = _base_core.global_position + Vector2(cos(angle_offset), sin(angle_offset)) * (min_spawn_dist + dist_offset)
-		if _nav_manager.is_position_walkable(candidate):
+		if nav.is_position_walkable(candidate):
 			return candidate
 		return spawn_pos
 	if not _spawn_points.is_empty():
