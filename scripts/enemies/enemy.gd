@@ -10,6 +10,8 @@ signal died
 @export var attack_interval: float = 1.0
 @export var asset_texture: Texture2D
 @export var visual_size: Vector2 = Vector2(64, 64)
+@export var path_recheck_interval: float = 0.75
+@export var waypoint_reach_distance: float = 20.0
 
 var enemy_type_id: String = "scout"
 var display_name: String = "异虫"
@@ -28,14 +30,23 @@ var _shield_regen_cooldown: float = 0.0
 var _base_speed: float = 75.0
 var _slow_amount: float = 0.0
 var _slow_timer: float = 0.0
+var _nav_manager: Node
+var _current_path: Array[Vector2] = []
+var _path_index: int = 0
+var _path_recheck_timer: float = 0.0
+var _last_target_position: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
 	add_to_group("enemies")
 	health = max_health
+	var nav_managers: Array = get_tree().get_nodes_in_group("navigation_manager")
+	if not nav_managers.is_empty():
+		_nav_manager = nav_managers[0]
 	queue_redraw()
 
 func setup(target_base) -> void:
 	base_core = target_base
+	_request_new_path()
 
 func setup_type(profile: Dictionary, wave: int = 1, strength_mult: float = 1.0, type_id: String = "") -> void:
 	if type_id != "":
@@ -71,18 +82,61 @@ func _physics_process(delta: float) -> void:
 	_update_slow(delta)
 	_update_shield_regen(delta)
 	_attack_cooldown -= delta
+	_path_recheck_timer -= delta
 	attack_target = _find_attack_target()
 	if attack_target == null:
+		velocity = Vector2.ZERO
 		return
 	var distance := global_position.distance_to(attack_target.global_position)
-	if distance > attack_range:
-		velocity = global_position.direction_to(attack_target.global_position) * move_speed
-		move_and_slide()
-	else:
+	if distance <= attack_range:
 		velocity = Vector2.ZERO
 		if _attack_cooldown <= 0.0:
 			attack_target.take_damage(damage)
 			_attack_cooldown = attack_interval
+		return
+	var move_target: Vector2 = _get_movement_target(attack_target.global_position)
+	var dir: Vector2 = Vector2.ZERO
+	if move_target != global_position:
+		dir = global_position.direction_to(move_target)
+	velocity = dir * move_speed
+	var collision: KinematicCollision2D = move_and_slide()
+	if _path_recheck_timer <= 0.0 or _last_target_position.distance_to(attack_target.global_position) > 60.0:
+		_request_new_path()
+
+func _get_movement_target(target_pos: Vector2) -> Vector2:
+	if _current_path.is_empty() or _path_index >= _current_path.size():
+		return target_pos
+	if _nav_manager == null:
+		return target_pos
+	if _path_index >= _current_path.size() - 1:
+		var final_dist: float = global_position.distance_to(target_pos)
+		if final_dist < waypoint_reach_distance * 2.0:
+			return target_pos
+	var waypoint: Vector2 = _current_path[_path_index]
+	if global_position.distance_to(waypoint) < waypoint_reach_distance:
+		_path_index += 1
+		if _path_index < _current_path.size():
+			waypoint = _current_path[_path_index]
+		else:
+			return target_pos
+	return waypoint
+
+func _request_new_path() -> void:
+	_path_recheck_timer = path_recheck_interval
+	if attack_target != null and is_instance_valid(attack_target):
+		_last_target_position = attack_target.global_position
+	else:
+		_last_target_position = base_core.global_position
+	if _nav_manager == null:
+		var nav_managers: Array = get_tree().get_nodes_in_group("navigation_manager")
+		if not nav_managers.is_empty():
+			_nav_manager = nav_managers[0]
+	if _nav_manager != null and _nav_manager.has_method("find_path"):
+		_current_path = _nav_manager.find_path(global_position, _last_target_position)
+		_path_index = 0
+	else:
+		_current_path = [_last_target_position]
+		_path_index = 0
 
 func _update_slow(delta: float) -> void:
 	if _slow_timer > 0.0:

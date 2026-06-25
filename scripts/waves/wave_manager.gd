@@ -27,6 +27,7 @@ var _base_core: Node2D
 var _spawn_root: Node
 var _enemies_root: Node
 var _spawn_points: Array[Node2D] = []
+var _nav_manager: Node
 var _wave: int = 0
 var _state: String = "待机"
 var _countdown: float = 0.0
@@ -44,6 +45,7 @@ var _prepare_duration_multiplier: float = 1.0
 var _enemy_strength_multiplier: float = 1.0
 var _current_wave_type: String = "normal"
 var _boss_active: bool = false
+var _spawn_angle_offset: float = 0.0
 
 func _ready() -> void:
 	game_state = get_node(game_state_path)
@@ -55,6 +57,9 @@ func _ready() -> void:
 			_spawn_points.append(child)
 	_load_enemy_types()
 	add_to_group("wave_manager")
+	var nav_managers: Array = get_tree().get_nodes_in_group("navigation_manager")
+	if not nav_managers.is_empty():
+		_nav_manager = nav_managers[0]
 	if auto_start:
 		_start_preparation()
 	else:
@@ -136,16 +141,40 @@ func _start_wave() -> void:
 	_emit_status()
 
 func _spawn_enemy() -> void:
-	if enemy_scene == null or _spawn_points.is_empty() or _spawn_queue.is_empty():
+	if enemy_scene == null or _spawn_queue.is_empty():
 		return
-	var spawn_point := _spawn_points[(_remaining_to_spawn + _wave) % _spawn_points.size()]
+	var spawn_position: Vector2 = _get_spawn_position()
 	var enemy := enemy_scene.instantiate()
-	enemy.global_position = spawn_point.global_position
+	enemy.global_position = spawn_position
 	_enemies_root.add_child(enemy)
 	var type_id: String = _spawn_queue.pop_front()
 	if enemy.has_method("setup_type") and _enemy_types.has(type_id):
 		enemy.setup_type(_enemy_types[type_id], _wave, _enemy_strength_multiplier, type_id)
 	enemy.setup(_base_core)
+
+func _get_spawn_position() -> Vector2:
+	if _nav_manager != null and _nav_manager.has_method("find_nearest_spawn_position"):
+		_spawn_angle_offset += randf_range(0.3, 0.8)
+		if _spawn_angle_offset >= TAU:
+			_spawn_angle_offset -= TAU
+		var min_spawn_dist: float = 500.0 + float(_wave) * 10.0
+		var base_angle: float = _spawn_angle_offset
+		if not _spawn_points.is_empty():
+			var chosen_point_idx: int = (_remaining_to_spawn + _wave * 3) % _spawn_points.size()
+			var point_to_base: Vector2 = _base_core.global_position.direction_to(_spawn_points[chosen_point_idx].global_position)
+			base_angle = point_to_base.angle() + randf_range(-0.8, 0.8)
+		var spawn_pos: Vector2 = _nav_manager.find_nearest_spawn_position(_base_core.global_position, min_spawn_dist)
+		var angle_offset: float = base_angle + randf_range(-0.5, 0.5)
+		var dist_offset: float = randf_range(-64, 64)
+		var candidate: Vector2 = _base_core.global_position + Vector2(cos(angle_offset), sin(angle_offset)) * (min_spawn_dist + dist_offset)
+		if _nav_manager.is_position_walkable(candidate):
+			return candidate
+		return spawn_pos
+	if not _spawn_points.is_empty():
+		var spawn_point := _spawn_points[(_remaining_to_spawn + _wave) % _spawn_points.size()]
+		return spawn_point.global_position
+	var fallback_angle: float = randf() * TAU
+	return _base_core.global_position + Vector2(cos(fallback_angle), sin(fallback_angle)) * 600.0
 
 func _alive_enemy_count() -> int:
 	return get_tree().get_nodes_in_group("enemies").size()

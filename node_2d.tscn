@@ -34,6 +34,7 @@
 [ext_resource type="PackedScene" path="res://scenes/buildings/laser_tower.tscn" id="31_laser_tower"]
 [ext_resource type="PackedScene" path="res://scenes/buildings/slow_tower.tscn" id="32_slow_tower"]
 [ext_resource type="Script" path="res://scripts/effects/effect_manager.gd" id="33_effect_manager"]
+[ext_resource type="PackedScene" path="res://scenes/navigation/navigation_manager.tscn" id="34_navigation"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_0hol4"]
 atlas = ExtResource("2_epypp")
@@ -414,6 +415,9 @@ script = ExtResource("25_quest_manager")
 quest_data_path = "res://data/quests/quest_data.json"
 game_state_path = NodePath("../GameState")
 research_manager_path = NodePath("../ResearchManager")
+
+[node name="NavigationManager" parent="." instance=ExtResource("34_navigation")]
+base_path = NodePath("../BaseCore")
 
 [node name="GameRoot" type="Node2D" parent="."]
 script = ExtResource("4_root")

@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/navigation/navigation_manager.gd" id="1_nav"]
+
+[node name="NavigationManager" type="Node2D"]
+script = ExtResource("1_nav")
+cell_size = 64.0
+map_half_extents = Vector2(2000, 2000)
+debug_draw_path = false

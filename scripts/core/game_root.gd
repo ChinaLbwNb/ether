@@ -38,6 +38,7 @@ var _walls_root: Node
 var _production_root: Node
 var _research_manager: Node
 var _quest_manager: Node
+var _nav_manager: Node
 var _build_mode: String = ""
 var _build_rotation_degrees: float = 0.0
 var _player_attack_cooldown: float = 0.0
@@ -51,11 +52,15 @@ func _ready() -> void:
 	_production_root = get_node(production_root_path)
 	_research_manager = get_node_or_null(research_manager_path)
 	_quest_manager = get_node_or_null(quest_manager_path)
+	var nav_managers: Array = get_tree().get_nodes_in_group("navigation_manager")
+	if not nav_managers.is_empty():
+		_nav_manager = nav_managers[0]
 	_base_core.health_changed.connect(game_state.set_base_health)
 	_base_core.destroyed.connect(_on_base_destroyed)
 	game_state.game_finished.connect(_on_game_finished)
 	if _player.has_signal("mech_destroyed"):
 		_player.mech_destroyed.connect(_on_mech_destroyed)
+	call_deferred("_register_initial_obstacles")
 
 func _process(delta: float) -> void:
 	_player_attack_cooldown = max(_player_attack_cooldown - delta, 0.0)
@@ -489,6 +494,12 @@ func _try_place_rift_portal(world_position: Vector2) -> void:
 func _assign_build_metadata(building: Node, costs: Dictionary) -> void:
 	building.set_meta("build_costs", costs.duplicate())
 	building.set_meta("build_rotation_degrees", _build_rotation_degrees)
+	if _nav_manager != null and building is Node2D and _nav_manager.has_method("register_building"):
+		_nav_manager.register_building(building as Node2D)
+
+func _register_initial_obstacles() -> void:
+	if _nav_manager != null and _nav_manager.has_method("rebuild_obstacles"):
+		_nav_manager.rebuild_obstacles()
 
 func _notify_building_built(building_type: String) -> void:
 	if _quest_manager != null and _quest_manager.has_method("notify_building_built"):
@@ -509,6 +520,8 @@ func _try_demolish_nearest_building() -> void:
 	if target.has_meta("build_costs"):
 		costs = target.get_meta("build_costs")
 	var refund: Dictionary = _refund_costs(costs)
+	if _nav_manager != null and target is Node2D and _nav_manager.has_method("unregister_building"):
+		_nav_manager.unregister_building(target as Node2D)
 	if target.has_method("_unregister_power"):
 		target.call("_unregister_power")
 	target.queue_free()
