@@ -236,6 +236,11 @@ func get_current_wave() -> int:
 func get_final_wave_count() -> int:
 	return _final_wave_count
 
+func start_waves() -> void:
+	if _state != "待机":
+		return
+	_start_preparation()
+
 func start_survival_wave(wave_number: int, composition: Dictionary, prepare_time: float) -> void:
 	if _state != "待机" and _state != "清场":
 		return

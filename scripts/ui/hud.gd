@@ -37,6 +37,8 @@ var _survival_wave_label: Label
 var _survival_time_label: Label
 var _survival_kills_label: Label
 var _survival_manager: Node
+var _game_over_panel: PanelContainer
+var _game_launcher: Node
 
 func _ready() -> void:
 	var root := VBoxContainer.new()
@@ -110,9 +112,11 @@ func _ready() -> void:
 			_survival_manager.survival_started.connect(_on_survival_started)
 		if _survival_manager.has_signal("stats_updated"):
 			_survival_manager.stats_updated.connect(_on_survival_stats_updated)
+	_game_launcher = get_tree().get_first_node_in_group("game_launcher")
 	_build_research_panel()
 	_build_quest_panel()
 	_build_survival_panel()
+	_build_game_over_panel()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_research"):
@@ -233,6 +237,77 @@ func _on_message_changed(text: String) -> void:
 
 func _on_game_finished(victory: bool, reason: String) -> void:
 	_result_label.text = ("胜利：" if victory else "失败：") + reason
+	_show_game_over_panel(victory, reason)
+
+func _build_game_over_panel() -> void:
+	_game_over_panel = PanelContainer.new()
+	_game_over_panel.visible = false
+	var panel_style: StyleBoxFlat = StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.02, 0.04, 0.08, 0.92)
+	panel_style.border_color = Color(0.6, 0.85, 1.0, 0.5)
+	panel_style.border_width_left = 2
+	panel_style.border_width_right = 2
+	panel_style.border_width_top = 2
+	panel_style.border_width_bottom = 2
+	panel_style.corner_radius_top_left = 12
+	panel_style.corner_radius_top_right = 12
+	panel_style.corner_radius_bottom_left = 12
+	panel_style.corner_radius_bottom_right = 12
+	_game_over_panel.add_theme_stylebox_override("panel", panel_style)
+	_game_over_panel.z_index = 100
+	add_child(_game_over_panel)
+	var center := CenterContainer.new()
+	center.anchor_right = 1.0
+	center.anchor_bottom = 1.0
+	_game_over_panel.add_child(center)
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 16)
+	vbox.custom_minimum_size = Vector2(360, 0)
+	center.add_child(vbox)
+	var title := Label.new()
+	title.text = "游戏结束"
+	title.add_theme_font_size_override("font_size", 36)
+	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.5, 1.0))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(title)
+	var result_label := Label.new()
+	result_label.name = "ResultLabel"
+	result_label.text = ""
+	result_label.add_theme_font_size_override("font_size", 18)
+	result_label.add_theme_color_override("font_color", Color(0.85, 0.92, 1.0, 0.95))
+	result_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(result_label)
+	var restart_btn := Button.new()
+	restart_btn.text = "重新开始"
+	restart_btn.custom_minimum_size = Vector2(200, 45)
+	restart_btn.pressed.connect(_on_restart_pressed)
+	vbox.add_child(restart_btn)
+	var menu_btn := Button.new()
+	menu_btn.text = "返回主菜单"
+	menu_btn.custom_minimum_size = Vector2(200, 45)
+	menu_btn.pressed.connect(_on_back_to_menu_pressed)
+	vbox.add_child(menu_btn)
+
+func _show_game_over_panel(victory: bool, reason: String) -> void:
+	if _game_over_panel == null:
+		return
+	_game_over_panel.visible = true
+	var center := _game_over_panel.get_child(0)
+	var vbox: VBoxContainer = center.get_child(0)
+	var title: Label = vbox.get_child(0)
+	title.text = "胜利！" if victory else "失败"
+	title.add_theme_color_override("font_color", Color(0.4, 1.0, 0.6, 1.0) if victory else Color(1.0, 0.4, 0.4, 1.0))
+	var result_label: Label = vbox.get_node("ResultLabel")
+	result_label.text = reason
+	get_tree().paused = true
+
+func _on_restart_pressed() -> void:
+	get_tree().paused = false
+	get_tree().reload_current_scene()
+
+func _on_back_to_menu_pressed() -> void:
+	get_tree().paused = false
+	get_tree().reload_current_scene()
 
 func _on_zone_changed(zone_id: String, zone_name: String) -> void:
 	if zone_name == "":

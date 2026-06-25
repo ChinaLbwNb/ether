@@ -47,6 +47,14 @@ func _broadcast_initial_state() -> void:
 	power_changed.emit(power_supply, power_demand)
 	message_changed.emit("E 采集，N 研究站，K 科技，Q 切武器，Space 冲刺")
 
+func set_starting_resources(energy: int, iron: int, carbon: int, storage: int) -> void:
+	storage_capacity = max(storage, 0)
+	resources["energy"] = max(energy, 0)
+	resources["iron"] = max(iron, 0)
+	resources["carbon"] = max(carbon, 0)
+	_sync_legacy_energy()
+	_emit_all_resources()
+
 func add_energy(amount: int) -> void:
 	add_resource("energy", amount)
 

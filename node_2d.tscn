@@ -28,6 +28,9 @@
 [ext_resource type="Script" path="res://scripts/quests/quest_manager.gd" id="25_quest_manager"]
 [ext_resource type="PackedScene" path="res://scenes/buildings/rift_portal.tscn" id="26_rift_portal"]
 [ext_resource type="Script" path="res://scripts/waves/survival_mode_manager.gd" id="27_survival_manager"]
+[ext_resource type="Script" path="res://scripts/core/game_mode_manager.gd" id="28_mode_manager"]
+[ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="29_main_menu"]
+[ext_resource type="Script" path="res://scripts/core/game_launcher.gd" id="30_launcher"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_0hol4"]
 atlas = ExtResource("2_epypp")
@@ -678,3 +681,19 @@ research_manager_path = NodePath("../ResearchManager")
 map_manager_path = NodePath("../MapManager")
 quest_manager_path = NodePath("../QuestManager")
 survival_manager_path = NodePath("../SurvivalModeManager")
+
+[node name="GameModeManager" type="Node" parent="."]
+script = ExtResource("28_mode_manager")
+
+[node name="MainMenu" type="CanvasLayer" parent="."]
+script = ExtResource("29_main_menu")
+game_mode_manager_path = NodePath("../GameModeManager")
+
+[node name="GameLauncher" type="Node" parent="."]
+script = ExtResource("30_launcher")
+game_state_path = NodePath("../GameState")
+game_mode_manager_path = NodePath("../GameModeManager")
+wave_manager_path = NodePath("../WaveManager")
+survival_mode_manager_path = NodePath("../SurvivalModeManager")
+research_manager_path = NodePath("../ResearchManager")
+main_menu_path = NodePath("../MainMenu")

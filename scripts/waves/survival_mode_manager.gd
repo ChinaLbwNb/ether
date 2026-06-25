@@ -43,6 +43,9 @@ func _process(delta: float) -> void:
 	_survival_time += delta
 	stats_updated.emit(_current_wave, _survival_time, _total_kills)
 
+func set_difficulty_scale(scale: float) -> void:
+	difficulty_scale = max(scale, 0.1)
+
 func start_survival_mode() -> void:
 	if _is_active:
 		return
@@ -191,11 +194,25 @@ func _end_survival(victory: bool) -> void:
 		return
 	_is_active = false
 	survival_ended.emit(_highest_wave_reached, _survival_time, _total_kills)
+	_save_score()
 	if game_state != null:
 		if victory:
 			game_state.finish_game(true, "生存模式结束！最高波次：%d，生存时间：%d秒，击杀：%d" % [_highest_wave_reached, int(_survival_time), _total_kills])
 		else:
 			game_state.finish_game(false, "基地被摧毁！最高波次：%d，生存时间：%d秒，击杀：%d" % [_highest_wave_reached, int(_survival_time), _total_kills])
+
+func _save_score() -> void:
+	var mode_manager := get_tree().get_first_node_in_group("game_mode_manager")
+	if mode_manager == null:
+		return
+	if not mode_manager.has_method("save_score"):
+		return
+	var score_data := {
+		"wave": _highest_wave_reached,
+		"time": _survival_time,
+		"kills": _total_kills
+	}
+	mode_manager.save_score("survival", score_data)
 
 func get_current_wave() -> int:
 	return _current_wave

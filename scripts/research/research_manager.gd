@@ -84,6 +84,13 @@ func get_unlocked_text() -> String:
 		names.append(str(tech.get("name", tech_id)))
 	return "科技：" + "、".join(names)
 
+func unlock_all_tech() -> void:
+	for tech_id in tech_definitions.keys():
+		if not unlocked_techs.has(str(tech_id)):
+			unlocked_techs.append(str(tech_id))
+			_apply_technology(str(tech_id))
+	research_changed.emit(unlocked_techs.duplicate())
+
 func _load_tech_data() -> void:
 	var file: FileAccess = FileAccess.open(tech_data_path, FileAccess.READ)
 	if file == null:
