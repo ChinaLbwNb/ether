@@ -16,22 +16,71 @@
   {
     "id": "mining_efficiency",
     "name": "采矿效率",
-    "description": "提升采矿机单次产出。",
+    "description": "提升采矿机单次产出30%。",
     "costs": {"energy": 60, "iron": 20},
     "requires": []
   },
   {
     "id": "generator_efficiency",
     "name": "发电效率",
-    "description": "提升发电机电力供给。",
+    "description": "提升发电机电力供给+15。",
     "costs": {"energy": 55, "carbon": 25},
     "requires": []
   },
   {
     "id": "wall_plating",
     "name": "复合装甲墙",
-    "description": "提升城墙最大耐久。",
-    "costs": {"energy": 50, "iron": 30},
+    "description": "提升城墙最大耐久+80。",
+    "costs": {"energy": 65, "iron": 40},
     "requires": ["tower_overdrive"]
+  },
+  {
+    "id": "rapid_fire",
+    "name": "速射模块",
+    "description": "大幅提升哨兵塔攻击速度。",
+    "costs": {"energy": 90, "iron": 35, "carbon": 20},
+    "requires": ["tower_overdrive"]
+  },
+  {
+    "id": "deep_mining",
+    "name": "深层采矿",
+    "description": "采矿机产出再提升40%。",
+    "costs": {"energy": 85, "iron": 45, "carbon": 15},
+    "requires": ["mining_efficiency"]
+  },
+  {
+    "id": "slow_tower",
+    "name": "减速力场",
+    "description": "解锁减速塔建造，减缓敌人移动速度。",
+    "costs": {"energy": 100, "iron": 30, "carbon": 45},
+    "requires": ["generator_efficiency"]
+  },
+  {
+    "id": "laser_tower",
+    "name": "激光塔技术",
+    "description": "解锁激光塔建造，持续高伤害输出。",
+    "costs": {"energy": 120, "iron": 50, "carbon": 40},
+    "requires": ["rapid_fire"]
+  },
+  {
+    "id": "fusion_reactor",
+    "name": "聚变反应堆",
+    "description": "发电机产出再提升+20电力。",
+    "costs": {"energy": 110, "iron": 40, "carbon": 50},
+    "requires": ["generator_efficiency", "wall_plating"]
+  },
+  {
+    "id": "mech_mk3",
+    "name": "机甲强化 Mk3",
+    "description": "机甲全面强化，武器、护甲、速度提升。",
+    "costs": {"energy": 130, "iron": 60, "carbon": 35},
+    "requires": ["mech_mk2", "rapid_fire"]
+  },
+  {
+    "id": "energy_shield_wall",
+    "name": "能量护盾墙",
+    "description": "城墙获得可恢复的能量护盾。",
+    "costs": {"energy": 140, "iron": 55, "carbon": 60},
+    "requires": ["wall_plating", "generator_efficiency"]
   }
 ]

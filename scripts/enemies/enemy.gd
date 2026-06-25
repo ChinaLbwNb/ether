@@ -18,10 +18,16 @@ var armor: int = 0
 var target_priority: String = "nearest"
 var tint_color: Color = Color(0.95, 0.15, 0.12, 0.95)
 var health: int
+var shield: int = 0
+var max_shield: int = 0
 var base_core
 var attack_target
 var is_dead: bool = false
 var _attack_cooldown: float = 0.0
+var _shield_regen_cooldown: float = 0.0
+var _base_speed: float = 75.0
+var _slow_amount: float = 0.0
+var _slow_timer: float = 0.0
 
 func _ready() -> void:
 	add_to_group("enemies")
@@ -45,6 +51,9 @@ func setup_type(profile: Dictionary, wave: int = 1, strength_mult: float = 1.0) 
 	armor = int(profile.get("armor", armor))
 	target_priority = str(profile.get("target_priority", target_priority))
 	tint_color = Color.html(str(profile.get("color", "#ef5b52")))
+	max_shield = int(float(int(profile.get("shield", 0))) * strength_mult)
+	shield = max_shield
+	_base_speed = move_speed
 	health = max_health
 	queue_redraw()
 
@@ -54,6 +63,8 @@ func _physics_process(delta: float) -> void:
 		return
 	if is_dead or base_core == null or not is_instance_valid(base_core):
 		return
+	_update_slow(delta)
+	_update_shield_regen(delta)
 	_attack_cooldown -= delta
 	attack_target = _find_attack_target()
 	if attack_target == null:
@@ -67,6 +78,23 @@ func _physics_process(delta: float) -> void:
 		if _attack_cooldown <= 0.0:
 			attack_target.take_damage(damage)
 			_attack_cooldown = attack_interval
+
+func _update_slow(delta: float) -> void:
+	if _slow_timer > 0.0:
+		_slow_timer -= delta
+		if _slow_timer <= 0.0:
+			_slow_amount = 0.0
+			move_speed = _base_speed
+
+func _update_shield_regen(delta: float) -> void:
+	if max_shield <= 0:
+		return
+	if _shield_regen_cooldown > 0.0:
+		_shield_regen_cooldown -= delta
+		return
+	if shield < max_shield:
+		shield = min(shield + int(float(max_shield) * 0.02 * delta * 60.0), max_shield)
+		queue_redraw()
 
 func _find_attack_target() -> Node2D:
 	if target_priority == "core" and base_core != null and is_instance_valid(base_core):
@@ -104,13 +132,37 @@ func take_damage(amount: int) -> void:
 	if is_dead:
 		return
 	var final_damage: int = maxi(amount - armor, 1)
+	_shield_regen_cooldown = 3.0
+	if shield > 0:
+		if final_damage <= shield:
+			shield -= final_damage
+			queue_redraw()
+			return
+		else:
+			final_damage -= shield
+			shield = 0
 	health = max(health - final_damage, 0)
 	queue_redraw()
 	if health == 0:
 		is_dead = true
 		remove_from_group("enemies")
 		died.emit()
+		_spawn_death_effect()
 		queue_free()
+
+func apply_slow(amount: float, duration: float) -> void:
+	if amount > _slow_amount or _slow_timer <= 0.0:
+		_slow_amount = amount
+		move_speed = _base_speed * (1.0 - amount)
+	_slow_timer = max(_slow_timer, duration)
+
+func _spawn_death_effect() -> void:
+	var managers: Array = get_tree().get_nodes_in_group("effect_manager")
+	if managers.is_empty():
+		return
+	var manager = managers[0]
+	if manager.has_method("spawn_death"):
+		manager.spawn_death(global_position, tint_color)
 
 func _draw() -> void:
 	var ratio := float(health) / float(max_health)
@@ -118,12 +170,23 @@ func _draw() -> void:
 		draw_texture_rect(asset_texture, Rect2(-visual_size * 0.5, visual_size), false, tint_color)
 		draw_rect(Rect2(Vector2(-26, -42), Vector2(52, 5)), Color(0.12, 0.02, 0.02, 0.85))
 		draw_rect(Rect2(Vector2(-26, -42), Vector2(52 * ratio, 5)), Color(0.95, 0.15, 0.12, 0.95))
+		if max_shield > 0:
+			var shield_ratio: float = float(shield) / float(max_shield)
+			draw_rect(Rect2(Vector2(-26, -49), Vector2(52, 4)), Color(0.05, 0.1, 0.25, 0.85))
+			draw_rect(Rect2(Vector2(-26, -49), Vector2(52 * shield_ratio, 4)), Color(0.3, 0.6, 1.0, 0.95))
 		if role == "elite":
 			draw_arc(Vector2.ZERO, 38.0, 0.0, TAU, 48, Color(0.7, 0.35, 1.0, 0.85), 3.0)
 		return
 	draw_circle(Vector2.ZERO, 28.0, tint_color)
 	draw_circle(Vector2.ZERO, 17.0, Color(0.95, 0.24, 0.18, 0.95))
+	draw_rect(Rect2(Vector2(-26, -42), Vector2(52, 5)), Color(0.12, 0.02, 0.02, 0.85))
 	draw_rect(Rect2(Vector2(-26, -42), Vector2(52 * ratio, 5)), Color(0.95, 0.15, 0.12, 0.95))
+	if max_shield > 0:
+		var shield_ratio: float = float(shield) / float(max_shield)
+		draw_rect(Rect2(Vector2(-26, -49), Vector2(52, 4)), Color(0.05, 0.1, 0.25, 0.85))
+		draw_rect(Rect2(Vector2(-26, -49), Vector2(52 * shield_ratio, 4)), Color(0.3, 0.6, 1.0, 0.95))
+	if _slow_amount > 0.0:
+		draw_arc(Vector2.ZERO, 32.0, 0.0, TAU, 48, Color(0.3, 0.7, 1.0, 0.4), 2.0)
 
 func _game_is_finished() -> bool:
 	var states: Array = get_tree().get_nodes_in_group("game_state")

@@ -10,12 +10,12 @@ signal wave_warning_changed(text: String)
 signal message_changed(text: String)
 signal game_finished(victory: bool, reason: String)
 
-@export var starting_energy: int = 0
-@export var starting_iron: int = 0
-@export var starting_carbon: int = 0
-@export var storage_capacity: int = 240
-@export var tower_cost: int = 50
-@export var wall_cost: int = 20
+@export var starting_energy: int = 80
+@export var starting_iron: int = 30
+@export var starting_carbon: int = 15
+@export var storage_capacity: int = 300
+@export var tower_cost: int = 45
+@export var wall_cost: int = 15
 @export var tower_upgrade_cost: int = 35
 @export var miner_energy_cost: int = 30
 @export var generator_energy_cost: int = 25
@@ -138,10 +138,16 @@ func has_stable_power() -> bool:
 	return power_supply >= power_demand
 
 func get_tower_costs() -> Dictionary:
-	return {"energy": tower_cost, "iron": 10}
+	return {"energy": tower_cost, "iron": 12}
+
+func get_laser_tower_costs() -> Dictionary:
+	return {"energy": 110, "iron": 35, "carbon": 20}
+
+func get_slow_tower_costs() -> Dictionary:
+	return {"energy": 80, "iron": 20, "carbon": 30}
 
 func get_wall_costs() -> Dictionary:
-	return {"energy": wall_cost, "iron": 5}
+	return {"energy": wall_cost, "iron": 8}
 
 func get_miner_costs() -> Dictionary:
 	return {"energy": miner_energy_cost, "iron": 15}

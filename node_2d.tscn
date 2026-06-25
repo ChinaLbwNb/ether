@@ -31,6 +31,9 @@
 [ext_resource type="Script" path="res://scripts/core/game_mode_manager.gd" id="28_mode_manager"]
 [ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="29_main_menu"]
 [ext_resource type="Script" path="res://scripts/core/game_launcher.gd" id="30_launcher"]
+[ext_resource type="PackedScene" path="res://scenes/buildings/laser_tower.tscn" id="31_laser_tower"]
+[ext_resource type="PackedScene" path="res://scenes/buildings/slow_tower.tscn" id="32_slow_tower"]
+[ext_resource type="Script" path="res://scripts/effects/effect_manager.gd" id="33_effect_manager"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_0hol4"]
 atlas = ExtResource("2_epypp")
@@ -423,6 +426,8 @@ production_root_path = NodePath("../ProductionBuildings")
 research_manager_path = NodePath("../ResearchManager")
 quest_manager_path = NodePath("../QuestManager")
 tower_scene = ExtResource("9_tower")
+laser_tower_scene = ExtResource("31_laser_tower")
+slow_tower_scene = ExtResource("32_slow_tower")
 wall_scene = ExtResource("13_wall")
 miner_scene = ExtResource("14_miner")
 generator_scene = ExtResource("15_generator")
@@ -644,6 +649,11 @@ obstacle_color = Color(0.35, 0.5, 0.3, 0.95)
 [node name="ProductionBuildings" type="Node2D" parent="."]
 
 [node name="Enemies" type="Node2D" parent="."]
+
+[node name="Effects" type="Node2D" parent="."]
+
+[node name="EffectManager" type="Node" parent="."]
+script = ExtResource("33_effect_manager")
 
 [node name="EnemySpawns" type="Node2D" parent="."]
 

@@ -42,6 +42,8 @@ var _survival_custom_composition: Dictionary = {}
 var _survival_prepare_time: float = 8.0
 var _prepare_duration_multiplier: float = 1.0
 var _enemy_strength_multiplier: float = 1.0
+var _current_wave_type: String = "normal"
+var _boss_active: bool = false
 
 func _ready() -> void:
 	game_state = get_node(game_state_path)
@@ -125,7 +127,11 @@ func _start_wave() -> void:
 	_spawn_cooldown = 0.0
 	if game_state != null:
 		game_state.set_wave_warning(_format_wave_warning(_wave, composition))
-		game_state.show_message("第 %d 波敌人来袭：%s" % [_wave, _format_composition_names(composition)])
+		var wave_type_label: String = get_wave_type_label(_current_wave_type)
+		var prefix: String = "第 %d 波" % _wave
+		if not wave_type_label.is_empty():
+			prefix = wave_type_label + " 第 %d 波" % _wave
+		game_state.show_message("%s敌人来袭：%s" % [prefix, _format_composition_names(composition)])
 	wave_started.emit(_wave)
 	_emit_status()
 
@@ -165,19 +171,63 @@ func _build_wave_composition(wave: int) -> Dictionary:
 	var mult: float = 1.0
 	if _is_final_defense:
 		mult = final_defense_difficulty_mult
-	var total_count: int = int(float(base_enemy_count + (wave - 1) * 2 + _dynamic_pressure_bonus()) * mult)
+	_current_wave_type = _determine_wave_type(wave)
+	var total_count: int = int(float(base_enemy_count + int(floor(float(wave - 1) * 1.5)) + _dynamic_pressure_bonus()) * mult)
 	var composition: Dictionary = {"scout": total_count}
 	if wave >= 2:
-		var armored_count: int = int(float(1 + int(floor(float(wave) / 2.0))) * mult)
+		var armored_count: int = int(float(1 + int(floor(float(wave - 1) / 2.5))) * mult)
 		composition["armored"] = armored_count
 		composition["scout"] = maxi(int(composition["scout"]) - armored_count, 2)
 	if wave >= 3:
-		composition["breaker"] = int(float(1 + int(floor(float(wave - 3) / 2.0))) * mult)
+		composition["breaker"] = int(float(1 + int(floor(float(wave - 2) / 3.0))) * mult)
 	if wave >= 4:
-		composition["spitter"] = int(float(1 + int(floor(float(wave - 4) / 2.0))) * mult)
-	if wave % 3 == 0:
-		composition["elite"] = int(mult) + (1 if _is_final_defense and wave >= 5 else 0)
+		composition["spitter"] = int(float(1 + int(floor(float(wave - 3) / 3.0))) * mult)
+	if wave >= 5:
+		composition["swarm"] = int(float(2 + int(floor(float(wave - 4) / 2.0))) * mult)
+	if wave >= 7:
+		composition["shielded"] = int(float(1 + int(floor(float(wave - 6) / 4.0))) * mult)
+	if wave >= 10:
+		composition["brute"] = int(float(1 + int(floor(float(wave - 9) / 5.0))) * mult)
+	if wave >= 4 and wave % 3 == 0:
+		composition["elite"] = max(int(float(1 + int(floor(float(wave) / 6.0))) * mult), 1)
+	match _current_wave_type:
+		"swarm":
+			var extra_swarm: int = int(float(8 + wave) * mult)
+			composition["swarm"] = int(composition.get("swarm", 0)) + extra_swarm
+			composition["scout"] = maxi(int(composition["scout"]) - int(float(extra_swarm) * 0.4), 1)
+		"boss":
+			var extra_brute: int = int(float(2 + int(floor(float(wave) / 10.0))) * mult)
+			var extra_shielded: int = int(float(2 + int(floor(float(wave) / 8.0))) * mult)
+			composition["brute"] = int(composition.get("brute", 0)) + extra_brute
+			composition["shielded"] = int(composition.get("shielded", 0)) + extra_shielded
+		"elite":
+			composition["elite"] = int(float(composition.get("elite", 1)) * 2.5) + int(2 * mult)
 	return composition
+
+func _determine_wave_type(wave: int) -> String:
+	if wave <= 2:
+		return "normal"
+	if wave % 10 == 0:
+		return "boss"
+	if wave % 5 == 0:
+		return "swarm"
+	if wave % 7 == 0:
+		return "elite"
+	return "normal"
+
+func get_wave_type_label(wave_type: String) -> String:
+	match wave_type:
+		"boss":
+			return "⚠️ BOSS波"
+		"swarm":
+			return "🐛 虫潮波"
+		"elite":
+			return "⚔️ 精英波"
+		_:
+			return ""
+
+func get_current_wave_type() -> String:
+	return _current_wave_type
 
 func _dynamic_pressure_bonus() -> int:
 	if game_state == null:
@@ -200,7 +250,11 @@ func _format_wave_warning(wave: int, composition: Dictionary) -> String:
 	var direction_text: String = "东侧与南侧"
 	if _spawn_points.size() == 1:
 		direction_text = "单方向"
-	return "预警：第 %d 波将从%s来袭：%s" % [wave, direction_text, _format_composition_names(composition)]
+	var wave_type_label: String = get_wave_type_label(_current_wave_type)
+	var prefix: String = "预警"
+	if not wave_type_label.is_empty():
+		prefix = wave_type_label + " 预警"
+	return "%s：第 %d 波将从%s来袭：%s" % [prefix, wave, direction_text, _format_composition_names(composition)]
 
 func _format_composition_names(composition: Dictionary) -> String:
 	var parts: Array[String] = []

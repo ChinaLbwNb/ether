@@ -10,6 +10,8 @@ class_name GameRoot
 @export var research_manager_path: NodePath
 @export var quest_manager_path: NodePath
 @export var tower_scene: PackedScene
+@export var laser_tower_scene: PackedScene
+@export var slow_tower_scene: PackedScene
 @export var wall_scene: PackedScene
 @export var miner_scene: PackedScene
 @export var generator_scene: PackedScene
@@ -67,6 +69,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_try_collect_resource()
 	elif event.is_action_pressed("build_tower"):
 		_set_build_mode("" if _build_mode == "tower" else "tower")
+	elif event.is_action_pressed("build_laser_tower"):
+		_set_build_mode("" if _build_mode == "laser" else "laser")
+	elif event.is_action_pressed("build_slow_tower"):
+		_set_build_mode("" if _build_mode == "slow" else "slow")
 	elif event.is_action_pressed("build_wall"):
 		_set_build_mode("" if _build_mode == "wall" else "wall")
 	elif event.is_action_pressed("build_generator"):
@@ -102,6 +108,10 @@ func _set_build_mode(new_mode: String) -> void:
 	_build_mode = new_mode
 	if _build_mode == "tower":
 		game_state.show_message("建造模式：哨兵塔，左键放置，R 旋转，右键取消")
+	elif _build_mode == "laser":
+		game_state.show_message("建造模式：激光塔，左键放置，右键取消")
+	elif _build_mode == "slow":
+		game_state.show_message("建造模式：减速塔，左键放置，右键取消")
 	elif _build_mode == "wall":
 		game_state.show_message("建造模式：城墙，左键放置，R 旋转，右键取消")
 	elif _build_mode == "generator":
@@ -127,6 +137,10 @@ func _is_building() -> bool:
 func _try_place_current_building(world_position: Vector2) -> void:
 	if _build_mode == "tower":
 		_try_place_tower(world_position)
+	elif _build_mode == "laser":
+		_try_place_laser_tower(world_position)
+	elif _build_mode == "slow":
+		_try_place_slow_tower(world_position)
 	elif _build_mode == "wall":
 		_try_place_wall(world_position)
 	elif _build_mode == "generator":
@@ -269,8 +283,78 @@ func _try_place_tower(world_position: Vector2) -> void:
 	_assign_build_metadata(tower, costs)
 	_towers_root.add_child(tower)
 	_apply_research_to_building(tower)
+	_spawn_build_effect(snapped_position)
 	game_state.show_message("哨兵塔已建造")
 	_notify_building_built("sentry_tower")
+
+func _try_place_laser_tower(world_position: Vector2) -> void:
+	if game_state.is_finished:
+		return
+	if laser_tower_scene == null:
+		game_state.show_message("缺少激光塔场景")
+		return
+	if not _is_tech_unlocked("laser_tower"):
+		game_state.show_message("激光塔技术尚未研发")
+		return
+	var snapped_position := _snap_to_build_grid(world_position)
+	var validation_message := _get_build_validation_message(snapped_position)
+	if not validation_message.is_empty():
+		game_state.show_message(validation_message)
+		return
+	var costs: Dictionary = game_state.get_laser_tower_costs()
+	if not game_state.spend_resources(costs):
+		game_state.show_message("资源不足，需要 %s" % game_state.format_cost(costs))
+		return
+	var tower := laser_tower_scene.instantiate()
+	tower.global_position = snapped_position
+	_assign_build_metadata(tower, costs)
+	_towers_root.add_child(tower)
+	_apply_research_to_building(tower)
+	_spawn_build_effect(snapped_position, Color(0.8, 0.3, 1.0, 1))
+	game_state.show_message("激光塔已建造")
+	_notify_building_built("laser_tower")
+
+func _try_place_slow_tower(world_position: Vector2) -> void:
+	if game_state.is_finished:
+		return
+	if slow_tower_scene == null:
+		game_state.show_message("缺少减速塔场景")
+		return
+	if not _is_tech_unlocked("slow_tower"):
+		game_state.show_message("减速力场技术尚未研发")
+		return
+	var snapped_position := _snap_to_build_grid(world_position)
+	var validation_message := _get_build_validation_message(snapped_position)
+	if not validation_message.is_empty():
+		game_state.show_message(validation_message)
+		return
+	var costs: Dictionary = game_state.get_slow_tower_costs()
+	if not game_state.spend_resources(costs):
+		game_state.show_message("资源不足，需要 %s" % game_state.format_cost(costs))
+		return
+	var tower := slow_tower_scene.instantiate()
+	tower.global_position = snapped_position
+	_assign_build_metadata(tower, costs)
+	_towers_root.add_child(tower)
+	_apply_research_to_building(tower)
+	_spawn_build_effect(snapped_position, Color(0.3, 0.7, 1.0, 1))
+	game_state.show_message("减速塔已建造")
+	_notify_building_built("slow_tower")
+
+func _is_tech_unlocked(tech_id: String) -> bool:
+	if _research_manager == null:
+		return true
+	if _research_manager.has_method("has_technology"):
+		return _research_manager.has_technology(tech_id)
+	return true
+
+func _spawn_build_effect(position: Vector2, color: Color = Color(0.2, 0.9, 0.6, 1)) -> void:
+	var managers: Array = get_tree().get_nodes_in_group("effect_manager")
+	if managers.is_empty():
+		return
+	var manager = managers[0]
+	if manager.has_method("spawn_build"):
+		manager.spawn_build(position, color)
 
 func _try_place_wall(world_position: Vector2) -> void:
 	if game_state.is_finished:
@@ -293,6 +377,7 @@ func _try_place_wall(world_position: Vector2) -> void:
 	_assign_build_metadata(wall, costs)
 	_walls_root.add_child(wall)
 	_apply_research_to_building(wall)
+	_spawn_build_effect(snapped_position, Color(0.7, 0.7, 0.75, 1))
 	game_state.show_message("城墙已建造")
 	_notify_building_built("wall_segment")
 
@@ -317,6 +402,7 @@ func _try_place_generator(world_position: Vector2) -> void:
 	_assign_build_metadata(generator, costs)
 	_production_root.add_child(generator)
 	_apply_research_to_building(generator)
+	_spawn_build_effect(snapped_position, Color(1, 0.9, 0.3, 1))
 	game_state.show_message("发电机已建造，电力 +%d" % generator.power_output)
 	_notify_building_built("power_generator")
 
@@ -346,6 +432,7 @@ func _try_place_miner(world_position: Vector2) -> void:
 	_production_root.add_child(miner)
 	miner.setup_deposit(deposit)
 	_apply_research_to_building(miner)
+	_spawn_build_effect(snapped_position, Color(0.9, 0.6, 0.3, 1))
 	game_state.show_message("采矿机已部署：%s" % _get_resource_label(deposit.resource_id))
 	_notify_building_built("mining_drill")
 
@@ -369,6 +456,7 @@ func _try_place_research_station(world_position: Vector2) -> void:
 	station.rotation_degrees = _build_rotation_degrees
 	_assign_build_metadata(station, costs)
 	_production_root.add_child(station)
+	_spawn_build_effect(snapped_position, Color(0.6, 0.4, 1.0, 1))
 	game_state.show_message("研究站已建造，按 K 打开科技面板")
 	_notify_building_built("research_station")
 
