@@ -223,11 +223,16 @@ func _update_mech_regen(delta: float) -> void:
 
 func _destroy_and_respawn() -> void:
 	is_destroyed = true
-	mech_destroyed.emit(death_energy_penalty)
+	var penalty_enabled: bool = true
+	var mode_manager = get_tree().get_first_node_in_group("game_mode_manager")
+	if mode_manager != null and mode_manager.has_method("is_death_penalty_enabled"):
+		penalty_enabled = mode_manager.is_death_penalty_enabled()
+	var actual_penalty: int = death_energy_penalty if penalty_enabled else 0
+	mech_destroyed.emit(actual_penalty)
 	global_position = _respawn_position
 	health = max_health
 	shield = 0
-	mech_energy = max(max_energy - death_energy_penalty, 0)
+	mech_energy = max(max_energy - actual_penalty, 0)
 	_dash_timer = 0.0
 	_dash_cooldown_timer = dash_cooldown
 	is_destroyed = false

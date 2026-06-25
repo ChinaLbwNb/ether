@@ -31,13 +31,15 @@ func _ready() -> void:
 func setup(target_base) -> void:
 	base_core = target_base
 
-func setup_type(profile: Dictionary, wave: int = 1) -> void:
+func setup_type(profile: Dictionary, wave: int = 1, strength_mult: float = 1.0) -> void:
 	enemy_type_id = str(profile.get("id", enemy_type_id))
 	display_name = str(profile.get("name", display_name))
 	role = str(profile.get("role", role))
-	max_health = int(profile.get("health", max_health)) + max(wave - 1, 0) * int(profile.get("health_growth", 6))
+	var base_health: int = int(profile.get("health", max_health)) + max(wave - 1, 0) * int(profile.get("health_growth", 6))
+	max_health = int(float(base_health) * strength_mult)
 	move_speed = float(profile.get("speed", move_speed))
-	damage = int(profile.get("damage", damage)) + int(floor(float(wave - 1) * 1.5))
+	var base_damage: int = int(profile.get("damage", damage)) + int(floor(float(wave - 1) * 1.5))
+	damage = int(float(base_damage) * strength_mult)
 	attack_range = float(profile.get("attack_range", attack_range))
 	attack_interval = float(profile.get("attack_interval", attack_interval))
 	armor = int(profile.get("armor", armor))

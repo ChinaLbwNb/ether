@@ -31,6 +31,8 @@ var energy: int = 0
 var power_supply: int = 0
 var power_demand: int = 0
 var is_finished: bool = false
+var unlimited_resources: bool = false
+var resource_multiplier: float = 1.0
 
 func _ready() -> void:
 	add_to_group("game_state")
@@ -62,8 +64,11 @@ func add_resource(resource_id: String, amount: int) -> int:
 	if is_finished:
 		return 0
 	_ensure_resource(resource_id)
+	var actual_amount: int = int(float(max(amount, 0)) * resource_multiplier)
 	var free_space: int = maxi(storage_capacity - get_total_resources(), 0)
-	var accepted: int = mini(max(amount, 0), free_space)
+	var accepted: int = mini(actual_amount, free_space)
+	if unlimited_resources:
+		accepted = actual_amount
 	resources[resource_id] += accepted
 	_sync_legacy_energy()
 	resource_changed.emit(resource_id, resources[resource_id])
@@ -71,9 +76,13 @@ func add_resource(resource_id: String, amount: int) -> int:
 	return accepted
 
 func can_afford(cost: int) -> bool:
+	if unlimited_resources:
+		return true
 	return get_resource("energy") >= cost
 
 func can_afford_resources(costs: Dictionary) -> bool:
+	if unlimited_resources:
+		return true
 	for resource_id in costs.keys():
 		if get_resource(str(resource_id)) < int(costs[resource_id]):
 			return false
@@ -83,7 +92,11 @@ func spend_energy(cost: int) -> bool:
 	return spend_resources({"energy": cost})
 
 func spend_resources(costs: Dictionary) -> bool:
-	if is_finished or not can_afford_resources(costs):
+	if is_finished:
+		return false
+	if unlimited_resources:
+		return true
+	if not can_afford_resources(costs):
 		return false
 	for resource_id in costs.keys():
 		var id: String = str(resource_id)
@@ -98,6 +111,8 @@ func get_resource(resource_id: String) -> int:
 	return int(resources[resource_id])
 
 func get_total_resources() -> int:
+	if unlimited_resources:
+		return 0
 	var total: int = 0
 	for amount in resources.values():
 		total += int(amount)

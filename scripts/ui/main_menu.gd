@@ -18,6 +18,16 @@ var _leaderboard_list: VBoxContainer
 var _config_panel: PanelContainer
 var _survival_config_panel: VBoxContainer
 var _sandbox_config_panel: VBoxContainer
+var _sandbox_res_mult: float = 1.0
+var _sandbox_enemy_str: float = 1.0
+var _sandbox_wave_int: float = 1.0
+var _sandbox_res_buttons: Array = []
+var _sandbox_enemy_buttons: Array = []
+var _sandbox_wave_buttons: Array = []
+var _sandbox_toggle_unlimited: Button
+var _sandbox_toggle_all_tech: Button
+var _sandbox_toggle_enemies: Button
+var _sandbox_toggle_death: Button
 
 func _ready() -> void:
 	_mode_manager = get_node_or_null(game_mode_manager_path)
@@ -165,6 +175,91 @@ func _build_config_panel(parent: VBoxContainer) -> void:
 	sand_desc.add_theme_color_override("font_color", Color(0.75, 0.85, 0.95, 0.9))
 	_sandbox_config_panel.add_child(sand_desc)
 
+	var res_mult_label := Label.new()
+	res_mult_label.text = "资源倍率：1.0x"
+	res_mult_label.name = "ResMultLabel"
+	res_mult_label.add_theme_font_size_override("font_size", 14)
+	_sandbox_config_panel.add_child(res_mult_label)
+	var res_mult_hbox := HBoxContainer.new()
+	res_mult_hbox.add_theme_constant_override("separation", 6)
+	_sandbox_config_panel.add_child(res_mult_hbox)
+	var res_mult_values := [0.5, 1.0, 2.0, 5.0, 10.0]
+	_sandbox_res_mult = 1.0
+	for mult in res_mult_values:
+		var btn := Button.new()
+		btn.text = "%.1fx" % mult
+		btn.pressed.connect(_on_sandbox_res_mult.bind(float(mult)))
+		_sandbox_res_buttons.append(btn)
+		res_mult_hbox.add_child(btn)
+
+	var enemy_str_label := Label.new()
+	enemy_str_label.text = "敌人强度：1.0x"
+	enemy_str_label.name = "EnemyStrLabel"
+	enemy_str_label.add_theme_font_size_override("font_size", 14)
+	_sandbox_config_panel.add_child(enemy_str_label)
+	var enemy_str_hbox := HBoxContainer.new()
+	enemy_str_hbox.add_theme_constant_override("separation", 6)
+	_sandbox_config_panel.add_child(enemy_str_hbox)
+	var enemy_str_values := [0.5, 1.0, 1.5, 2.0, 3.0]
+	_sandbox_enemy_str = 1.0
+	for mult in enemy_str_values:
+		var btn := Button.new()
+		btn.text = "%.1fx" % mult
+		btn.pressed.connect(_on_sandbox_enemy_str.bind(float(mult)))
+		_sandbox_enemy_buttons.append(btn)
+		enemy_str_hbox.add_child(btn)
+
+	var wave_int_label := Label.new()
+	wave_int_label.text = "波次间隔：1.0x"
+	wave_int_label.name = "WaveIntLabel"
+	wave_int_label.add_theme_font_size_override("font_size", 14)
+	_sandbox_config_panel.add_child(wave_int_label)
+	var wave_int_hbox := HBoxContainer.new()
+	wave_int_hbox.add_theme_constant_override("separation", 6)
+	_sandbox_config_panel.add_child(wave_int_hbox)
+	var wave_int_values := [0.5, 1.0, 1.5, 2.0]
+	_sandbox_wave_int = 1.0
+	for mult in wave_int_values:
+		var btn := Button.new()
+		btn.text = "%.1fx" % mult
+		btn.pressed.connect(_on_sandbox_wave_int.bind(float(mult)))
+		_sandbox_wave_buttons.append(btn)
+		wave_int_hbox.add_child(btn)
+
+	var toggle_unlimited := Button.new()
+	toggle_unlimited.text = "无限资源：关"
+	toggle_unlimited.name = "ToggleUnlimited"
+	toggle_unlimited.toggle_mode = true
+	toggle_unlimited.pressed.connect(_on_sandbox_toggle_unlimited)
+	_sandbox_toggle_unlimited = toggle_unlimited
+	_sandbox_config_panel.add_child(toggle_unlimited)
+
+	var toggle_all_tech := Button.new()
+	toggle_all_tech.text = "全科技解锁：关"
+	toggle_all_tech.name = "ToggleAllTech"
+	toggle_all_tech.toggle_mode = true
+	toggle_all_tech.pressed.connect(_on_sandbox_toggle_all_tech)
+	_sandbox_toggle_all_tech = toggle_all_tech
+	_sandbox_config_panel.add_child(toggle_all_tech)
+
+	var toggle_enemies := Button.new()
+	toggle_enemies.text = "敌人开关：开"
+	toggle_enemies.name = "ToggleEnemies"
+	toggle_enemies.toggle_mode = true
+	toggle_enemies.button_pressed = true
+	toggle_enemies.pressed.connect(_on_sandbox_toggle_enemies)
+	_sandbox_toggle_enemies = toggle_enemies
+	_sandbox_config_panel.add_child(toggle_enemies)
+
+	var toggle_death := Button.new()
+	toggle_death.text = "死亡惩罚：开"
+	toggle_death.name = "ToggleDeath"
+	toggle_death.toggle_mode = true
+	toggle_death.button_pressed = true
+	toggle_death.pressed.connect(_on_sandbox_toggle_death)
+	_sandbox_toggle_death = toggle_death
+	_sandbox_config_panel.add_child(toggle_death)
+
 func _build_leaderboard_panel() -> void:
 	_leaderboard_panel = PanelContainer.new()
 	_leaderboard_panel.visible = false
@@ -223,7 +318,52 @@ func _update_difficulty_selection() -> void:
 
 func _on_start_pressed() -> void:
 	var config: Dictionary = {"difficulty": _selected_difficulty}
+	if _selected_mode == "sandbox":
+		config["resource_multiplier"] = _sandbox_res_mult
+		config["enemy_strength"] = _sandbox_enemy_str
+		config["wave_interval"] = _sandbox_wave_int
+		config["unlimited_resources"] = _sandbox_toggle_unlimited.button_pressed
+		config["all_tech_unlocked"] = _sandbox_toggle_all_tech.button_pressed
+		config["enemies_enabled"] = _sandbox_toggle_enemies.button_pressed
+		config["death_penalty_enabled"] = _sandbox_toggle_death.button_pressed
 	start_game.emit(_selected_mode, config)
+
+func _on_sandbox_res_mult(mult: float) -> void:
+	_sandbox_res_mult = mult
+	_update_sandbox_res_buttons()
+	var label := _sandbox_config_panel.get_node("ResMultLabel")
+	label.text = "资源倍率：%.1fx" % mult
+
+func _update_sandbox_res_buttons() -> void:
+	for btn in _sandbox_res_buttons:
+		btn.disabled = false
+	pass
+
+func _on_sandbox_enemy_str(mult: float) -> void:
+	_sandbox_enemy_str = mult
+	var label := _sandbox_config_panel.get_node("EnemyStrLabel")
+	label.text = "敌人强度：%.1fx" % mult
+
+func _on_sandbox_wave_int(mult: float) -> void:
+	_sandbox_wave_int = mult
+	var label := _sandbox_config_panel.get_node("WaveIntLabel")
+	label.text = "波次间隔：%.1fx" % mult
+
+func _on_sandbox_toggle_unlimited() -> void:
+	var on: bool = _sandbox_toggle_unlimited.button_pressed
+	_sandbox_toggle_unlimited.text = "无限资源：" + ("开" if on else "关")
+
+func _on_sandbox_toggle_all_tech() -> void:
+	var on: bool = _sandbox_toggle_all_tech.button_pressed
+	_sandbox_toggle_all_tech.text = "全科技解锁：" + ("开" if on else "关")
+
+func _on_sandbox_toggle_enemies() -> void:
+	var on: bool = _sandbox_toggle_enemies.button_pressed
+	_sandbox_toggle_enemies.text = "敌人开关：" + ("开" if on else "关")
+
+func _on_sandbox_toggle_death() -> void:
+	var on: bool = _sandbox_toggle_death.button_pressed
+	_sandbox_toggle_death.text = "死亡惩罚：" + ("开" if on else "关")
 
 func _toggle_leaderboard() -> void:
 	_leaderboard_panel.visible = not _leaderboard_panel.visible

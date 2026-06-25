@@ -45,6 +45,8 @@ func _on_start_game(mode_id: String, config: Dictionary) -> void:
 	_mode_manager.set_mode(mode_id)
 	if config.has("difficulty"):
 		_mode_manager.set_difficulty(str(config["difficulty"]))
+	if mode_id == "sandbox":
+		_mode_manager.apply_mode_config("sandbox", config)
 	_apply_mode_settings()
 	_hide_menu()
 	_game_started = true
@@ -60,12 +62,30 @@ func _apply_mode_settings() -> void:
 	var storage: int = int(starting.get("storage", 240))
 	if _game_state.has_method("set_starting_resources"):
 		_game_state.set_starting_resources(energy, iron, carbon, storage)
+	if _mode_manager.is_sandbox_unlimited_resources():
+		_game_state.unlimited_resources = true
+	if _mode_manager.current_mode == "sandbox":
+		var sandbox_config: Dictionary = _mode_manager.sandbox_config
+		_game_state.resource_multiplier = float(sandbox_config.get("resource_multiplier", 1.0))
 	if _mode_manager.is_sandbox_all_tech() and _research_manager != null:
 		if _research_manager.has_method("unlock_all_tech"):
 			_research_manager.unlock_all_tech()
 	if _survival_manager != null and _mode_manager != null:
 		if _survival_manager.has_method("set_difficulty_scale"):
 			_survival_manager.set_difficulty_scale(_mode_manager.get_survival_difficulty_scale())
+	if _mode_manager.current_mode == "sandbox":
+		_apply_sandbox_wave_settings()
+
+func _apply_sandbox_wave_settings() -> void:
+	if _wave_manager == null or _mode_manager == null:
+		return
+	var sandbox_config: Dictionary = _mode_manager.sandbox_config
+	var wave_mult: float = float(sandbox_config.get("wave_interval", 1.0))
+	if _wave_manager.has_method("set_prepare_duration_multiplier"):
+		_wave_manager.set_prepare_duration_multiplier(wave_mult)
+	var enemy_str: float = float(sandbox_config.get("enemy_strength", 1.0))
+	if _wave_manager.has_method("set_enemy_strength_multiplier"):
+		_wave_manager.set_enemy_strength_multiplier(enemy_str)
 
 func _start_waves_for_mode(mode_id: String) -> void:
 	match mode_id:

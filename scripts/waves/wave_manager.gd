@@ -40,6 +40,8 @@ var _final_wave_count: int = 0
 var _is_survival_mode: bool = false
 var _survival_custom_composition: Dictionary = {}
 var _survival_prepare_time: float = 8.0
+var _prepare_duration_multiplier: float = 1.0
+var _enemy_strength_multiplier: float = 1.0
 
 func _ready() -> void:
 	game_state = get_node(game_state_path)
@@ -104,7 +106,7 @@ func _process(delta: float) -> void:
 
 func _start_preparation() -> void:
 	_state = "准备"
-	_countdown = prepare_duration
+	_countdown = prepare_duration * _prepare_duration_multiplier
 	_next_wave_preview = _build_wave_composition(_wave + 1)
 	_emit_status()
 	if game_state != null:
@@ -136,7 +138,7 @@ func _spawn_enemy() -> void:
 	_enemies_root.add_child(enemy)
 	var type_id: String = _spawn_queue.pop_front()
 	if enemy.has_method("setup_type") and _enemy_types.has(type_id):
-		enemy.setup_type(_enemy_types[type_id], _wave)
+		enemy.setup_type(_enemy_types[type_id], _wave, _enemy_strength_multiplier)
 	enemy.setup(_base_core)
 
 func _alive_enemy_count() -> int:
@@ -240,6 +242,12 @@ func start_waves() -> void:
 	if _state != "待机":
 		return
 	_start_preparation()
+
+func set_prepare_duration_multiplier(mult: float) -> void:
+	_prepare_duration_multiplier = max(mult, 0.1)
+
+func set_enemy_strength_multiplier(mult: float) -> void:
+	_enemy_strength_multiplier = max(mult, 0.1)
 
 func start_survival_wave(wave_number: int, composition: Dictionary, prepare_time: float) -> void:
 	if _state != "待机" and _state != "清场":
